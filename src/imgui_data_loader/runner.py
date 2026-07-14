@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Optional
 
 from ._assets import default_ini_path, ensure_assets
@@ -43,8 +44,18 @@ def run_file_dialog(
         params.app_window_params.window_geometry.size = tuple(config.window_size)
         params.app_window_params.window_geometry.size_auto = False
     params.app_window_params.resizable = config.resizable
+    # Route the layout .ini. hello_imgui resolves ini_filename relative to
+    # ini_folder_type (default: the current working directory), so an empty or
+    # relative name would drop a file next to wherever the app was launched.
+    # Pin it to an absolute path instead (default: ~/.config/imgui_data_loader).
     if not params.ini_filename:
-        params.ini_filename = config.ini_path or default_ini_path()
+        ini = config.ini_path or default_ini_path()
+        params.ini_filename = ini
+        if os.path.isabs(ini):
+            params.ini_folder_type = hello_imgui.IniFolderType.absolute_path
+            parent = os.path.dirname(ini)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
     params.callbacks.show_gui = dlg.render
 
     addons = immapp.AddOnsParams()

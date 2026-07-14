@@ -25,7 +25,9 @@ def _null_runner_params():
     p.platform_backend_type = hello_imgui.PlatformBackendType.null
     p.renderer_backend_type = hello_imgui.RendererBackendType.null
     p.app_window_params.window_geometry.size = (360, 720)
-    p.ini_filename = ""  # don't write a layout file
+    # keep the layout .ini out of the repo/cwd during tests
+    p.ini_folder_type = hello_imgui.IniFolderType.temp_folder
+    p.ini_filename = "imgui_data_loader_test.ini"
 
     # The null renderer doesn't upload the font atlas; declare that the
     # backend "has textures" so imgui 1.92's NewFrame doesn't assert on a
@@ -115,6 +117,35 @@ def test_run_file_dialog_harness_headless():
     assert count["n"] >= 2
     assert result.cancelled  # nothing was picked
     assert result.paths == []
+
+
+def test_ini_path_is_configurable(tmp_path):
+    # config.ini_path controls where hello_imgui writes the layout .ini, and a
+    # not-yet-existing parent directory is created for it.
+    from imgui_bundle import hello_imgui
+    from imgui_data_loader import run_file_dialog
+
+    ini = tmp_path / "nested" / "layout.ini"
+    params = _null_runner_params()
+    params.ini_filename = ""  # let run_file_dialog fill it from config.ini_path
+    count = {"n": 0}
+
+    def pre_new_frame():
+        count["n"] += 1
+        if count["n"] >= 3:
+            hello_imgui.get_runner_params().app_shall_exit = True
+
+    params.callbacks.pre_new_frame = pre_new_frame
+
+    try:
+        run_file_dialog(
+            FileDialogConfig(title="Ini", ini_path=str(ini)),
+            runner_params=params,
+        )
+    except Exception as exc:
+        pytest.skip(f"null backend unavailable: {exc}")
+
+    assert ini.exists()  # written exactly where configured, cwd untouched
 
 
 def test_widget_constructs_without_context():

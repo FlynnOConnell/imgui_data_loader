@@ -188,9 +188,25 @@ Or react via a callback without polling: `FileDialogConfig(on_select=lambda r: l
 | `quit_on_escape` | `True` | Esc cancels |
 | `close_on_select` | `True` | exit the run loop after a pick (one-shot mode) |
 | `window_title`, `window_size`, `resizable` | — | OS window (one-shot) |
-| `ini_path`, `assets_folder` | `None` | override hello_imgui paths |
+| `ini_path` | `~/.config/imgui_data_loader/…` | where the layout `.ini` is saved (see below) |
+| `assets_folder` | imgui-bundle's | folder providing the icon font |
 | `persistence` | `None` | a `PreferenceStore` |
 | `on_select`, `on_cancel` | `None` | result callbacks |
+
+## Where the layout `.ini` goes
+
+hello_imgui persists window layout to a small `.ini`. By default `run_file_dialog`
+writes it to an **absolute** path under your config dir —
+`~/.config/imgui_data_loader/file_dialog.ini` (honoring `$XDG_CONFIG_HOME`) — so it
+never lands in the current working directory. Change it with:
+
+```python
+run_file_dialog(FileDialogConfig(title="…", ini_path="/path/to/my_dialog.ini"))
+```
+
+The parent directory is created if needed. When you **embed** the dialog with your
+own runner, set `params.ini_filename` (and optionally `params.ini_folder_type`)
+yourself — `run_file_dialog` only fills it in when you leave it unset.
 
 ## Notes
 
