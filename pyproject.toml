@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "imgui_data_loader"
+version = "0.1.0"
+description = "A themed, configurable imgui file/folder open dialog widget built on imgui-bundle."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Flynn OConnell", email = "flynnoconnell@gmail.com" }]
+keywords = ["imgui", "imgui-bundle", "hello-imgui", "file-dialog", "gui", "widget"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: User Interfaces",
+    "Topic :: Multimedia :: Graphics",
+]
+dependencies = [
+    "imgui-bundle>=1.92,<2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://github.com/FlynnOConnell/imgui_data_loader"
+Source = "https://github.com/FlynnOConnell/imgui_data_loader"
+Issues = "https://github.com/FlynnOConnell/imgui_data_loader/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+imgui_data_loader = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
