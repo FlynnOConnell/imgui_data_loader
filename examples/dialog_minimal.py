@@ -9,12 +9,13 @@ Folder" launcher and returns a DialogResult.
 from imgui_data_loader import FileDialogConfig, run_file_dialog
 
 
-def build_config() -> FileDialogConfig:
-    return FileDialogConfig()  # every option defaulted
+# Module-level so scripts/capture_docs.py can drive the dialog for screenshots
+# without running main() (which starts its own blocking event loop).
+CONFIG = FileDialogConfig()  # every option defaulted
 
 
 def main() -> None:
-    result = run_file_dialog(build_config())
+    result = run_file_dialog(CONFIG)
     if result:  # truthy only for a real selection
         print("first path :", result.path)
         print("all paths  :", result.paths)

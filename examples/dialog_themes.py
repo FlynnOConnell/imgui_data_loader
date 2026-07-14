@@ -56,18 +56,19 @@ def footer(dlg) -> None:
         imgui.end_popup()
 
 
-def build_config() -> FileDialogConfig:
-    return FileDialogConfig(
-        title="Session Browser",
-        subtitle="open a recording to inspect it",
-        theme=Theme.light(),
-        window_size=WINDOW_SIZE,
-        footer_draw=footer,
-    )
+# Module-level so scripts/capture_docs.py can drive the dialog for screenshots
+# without running main() (which starts its own blocking event loop).
+CONFIG = FileDialogConfig(
+    title="Session Browser",
+    subtitle="open a recording to inspect it",
+    theme=Theme.light(),
+    window_size=WINDOW_SIZE,
+    footer_draw=footer,
+)
 
 
 def main() -> None:
-    result = run_file_dialog(build_config())
+    result = run_file_dialog(CONFIG)
     print("selected:", result.paths if result else "cancelled")
 
 

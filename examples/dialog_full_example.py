@@ -128,25 +128,26 @@ def on_select(result: DialogResult) -> None:
     print("selected:", result.paths)
 
 
-def build_config() -> FileDialogConfig:
-    return FileDialogConfig(
-        title="Microscopy Loader",
-        subtitle="open a dataset to begin",
-        theme=Theme.dark().replace(accent=(0.20, 0.75, 0.70, 1.0)),
-        buttons=[],  # the two-column grid in `actions` replaces the default column
-        persistence=STORE,
-        top_draw=actions,
-        info=formats,
-        options_draw=load_options,
-        options_label="Load options",
-        quit_label="Close",
-        on_select=on_select,
-        on_cancel=lambda: print("cancelled"),
-    )
+# Module-level so scripts/capture_docs.py can drive the dialog for screenshots
+# without running main() (which starts its own blocking event loop).
+CONFIG = FileDialogConfig(
+    title="Microscopy Loader",
+    subtitle="open a dataset to begin",
+    theme=Theme.dark().replace(accent=(0.20, 0.75, 0.70, 1.0)),
+    buttons=[],  # the two-column grid in `actions` replaces the default column
+    persistence=STORE,
+    top_draw=actions,
+    info=formats,
+    options_draw=load_options,
+    options_label="Load options",
+    quit_label="Close",
+    on_select=on_select,
+    on_cancel=lambda: print("cancelled"),
+)
 
 
 def main() -> None:
-    run_file_dialog(build_config())
+    run_file_dialog(CONFIG)
     print("recent now:", STORE.recent())
 
 

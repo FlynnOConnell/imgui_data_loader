@@ -118,7 +118,7 @@ def _capture_one(stem: str, popup: bool = False) -> None:
     from imgui_data_loader import FileDialog, ensure_assets
 
     mod = _load_example(stem)
-    dlg = FileDialog(mod.build_config())
+    dlg = FileDialog(mod.CONFIG)
     size = getattr(mod, "WINDOW_SIZE", (360, 780))
 
     ensure_assets()
@@ -158,7 +158,7 @@ def _capture_one(stem: str, popup: bool = False) -> None:
 
 
 def _has_options(stem: str) -> bool:
-    return getattr(_load_example(stem).build_config(), "options_draw", None) is not None
+    return getattr(_load_example(stem).CONFIG, "options_draw", None) is not None
 
 
 def main() -> None:
