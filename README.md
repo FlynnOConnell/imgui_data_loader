@@ -1,16 +1,15 @@
 # imgui_data_loader
 
-A themed, configurable **file / folder open dialog** for
-[imgui-bundle](https://github.com/pthom/imgui_bundle).
+A themed, configurable **file / folder open dialog** widget, built on
+**imgui-file-dialog** and [imgui-bundle](https://github.com/pthom/imgui_bundle).
 
-It builds on the pieces imgui-bundle already ships —
-[imgui](https://github.com/ocornut/imgui) and
-[hello_imgui](https://github.com/pthom/hello_imgui) for the UI, and
-`portable_file_dialogs` for the **OS-native** file picker — and wraps them in a
-small, styled **launcher window**: a title, your help/info content, and buttons
-that open the native picker. Buttons, file types, theme, the info card, and an
-options popup are all configurable. Pop it up one-shot to get back the path the
-user picked, or embed the widget as one panel of a larger app.
+It gives you:
+
+- a small, styled **launcher window** — your title, help/info content, and
+  buttons that open the **OS-native** picker (via `portable_file_dialogs`)
+- configurable buttons — open a file, many files, a folder, or save
+- customizable file-type filters, theme, an info card, and an options popup
+- one-shot use that returns the picked path, or embed it as a panel in a larger app
 
 <p align="center">
   <a href="examples/dialog_full_example.py">
