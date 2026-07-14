@@ -309,9 +309,15 @@ class FileDialog:
 
         imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
         theme = self.theme
-        opt_w = hello_imgui.em_size(7)
-        quit_w = hello_imgui.em_size(6)
-        spacing = imgui.get_style().item_spacing.x
+        style = imgui.get_style()
+        # size each button to its (icon + label) text so custom labels don't clip
+        opt_text = f"{fa.ICON_FA_GEARS}  {cfg.options_label}"
+        quit_text = f"{fa.ICON_FA_XMARK}  {cfg.quit_label}"
+        pad = style.frame_padding.x * 2 + hello_imgui.em_size(0.6)
+        min_w = hello_imgui.em_size(4.5)
+        opt_w = max(imgui.calc_text_size(opt_text).x + pad, min_w)
+        quit_w = max(imgui.calc_text_size(quit_text).x + pad, min_w)
+        spacing = style.item_spacing.x
         row_w = 0.0
         if show_options:
             row_w += opt_w
@@ -324,18 +330,14 @@ class FileDialog:
         btn_h = hello_imgui.em_size(1.5)
         push_button_style(theme, primary=False)
         if show_options:
-            if imgui.button(
-                f"{fa.ICON_FA_GEARS}  {cfg.options_label}", imgui.ImVec2(opt_w, btn_h)
-            ):
+            if imgui.button(opt_text, imgui.ImVec2(opt_w, btn_h)):
                 self._open_options = True
             if imgui.is_item_hovered():
                 wrapped_tooltip(cfg.options_label)
             if show_quit:
                 imgui.same_line()
         if show_quit:
-            if imgui.button(
-                f"{fa.ICON_FA_XMARK}  {cfg.quit_label}", imgui.ImVec2(quit_w, btn_h)
-            ):
+            if imgui.button(quit_text, imgui.ImVec2(quit_w, btn_h)):
                 self.cancel()
         pop_button_style()
 
