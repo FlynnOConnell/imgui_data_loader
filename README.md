@@ -1,26 +1,38 @@
-# imgui_data_loader
+<h1 align="center">imgui_data_loader</h1>
 
-A themed, configurable **file / folder open dialog** widget, built on
-**imgui-file-dialog** and [imgui-bundle](https://github.com/pthom/imgui_bundle).
+<p align="center">
+A themed, configurable <b>file / folder open dialog</b> widget.
+</p>
 
-It gives you:
+<p align="center">
+<a href="https://pypi.org/project/imgui_data_loader/"><img src="https://img.shields.io/pypi/v/imgui_data_loader.svg" alt="PyPI version"></a>
+<a href="https://pypi.org/project/imgui_data_loader/"><img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+"></a>
+<a href="LICENSE"><img src="https://img.shields.io/pypi/l/imgui_data_loader.svg" alt="License: MIT"></a>
+</p>
+
+<p align="center">
+<a href="#install"><b>Install</b></a> ·
+<a href="#quick-start"><b>Quick start</b></a> ·
+<a href="#examples"><b>Examples</b></a> ·
+<a href="#configuration-reference"><b>Configuration</b></a> ·
+<a href="https://github.com/FlynnOConnell/imgui_data_loader/issues"><b>Issues</b></a>
+</p>
+
+<p align="center">
+  <a href="examples/dialog_full_example.py">
+    <img src="examples/images/dialog_full_example.png" alt="imgui_data_loader file dialog" width="340">
+  </a>
+  <br/>
+  <em>The <a href="examples/dialog_full_example.py">full example</a> — a source selector, a two-column action grid, and a formats panel.</em>
+</p>
+
+Built on **imgui-file-dialog** and [imgui-bundle](https://github.com/pthom/imgui_bundle). It gives you:
 
 - a small, styled **launcher window** — your title, help/info content, and
   buttons that open the **OS-native** picker (via `portable_file_dialogs`)
 - configurable buttons — open a file, many files, a folder, or save
 - customizable file-type filters, theme, an info card, and an options popup
 - one-shot use that returns the picked path, or embed it as a panel in a larger app
-
-<p align="center">
-  <a href="examples/dialog_full_example.py">
-    <img src="examples/images/dialog_full_example.png" alt="imgui_data_loader file dialog" width="360">
-  </a>
-</p>
-
-<p align="center">
-  See the full example code here:
-  <a href="examples/dialog_full_example.py"><code>examples/dialog_full_example.py</code></a>
-</p>
 
 ## Install
 
