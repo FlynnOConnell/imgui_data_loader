@@ -277,6 +277,13 @@ class FileDialog:
         if self._open_options:
             imgui.open_popup("##idl_options")
             self._open_options = False
+        # Anchor the popup to the dialog's center. Without this, imgui places it
+        # at the cursor/mouse point, which drifts far down a tall window. Cond
+        # "appearing" positions it only when it opens, so it can still be dragged.
+        if imgui.is_popup_open("##idl_options"):
+            wp, ws = imgui.get_window_pos(), imgui.get_window_size()
+            center = imgui.ImVec2(wp.x + ws.x * 0.5, wp.y + ws.y * 0.5)
+            imgui.set_next_window_pos(center, imgui.Cond_.appearing, imgui.ImVec2(0.5, 0.5))
         if not imgui.begin_popup("##idl_options", imgui.WindowFlags_.always_auto_resize):
             return
         try:
