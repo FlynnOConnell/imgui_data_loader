@@ -126,6 +126,14 @@ styling.
   if one shows empty.
 - Draw callbacks run inside an active imgui frame — only call imgui from them.
 
+## Acknowledgements
+
+This dialog started life inside
+[mbo_utilities](https://github.com/MillerBrainObservatory/mbo_utilities) at the
+[Miller Brain Observatory](https://github.com/MillerBrainObservatory), where the
+original file/folder loader was built. `imgui_data_loader` extracts and
+generalizes it into a standalone, installable library.
+
 ## License
 
 MIT
