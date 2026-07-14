@@ -275,7 +275,9 @@ class FileDialog:
         card_w = self._button_width()
         center_next_item(card_w)
 
-        imgui.push_style_color(imgui.Col_.child_bg, to_vec4(theme.bg_card))
+        # Transparent fill: the card shows the dialog background, leaving only
+        # its border — so it reads with the same weight as the outlined buttons.
+        imgui.push_style_color(imgui.Col_.child_bg, imgui.ImVec4(0, 0, 0, 0))
         imgui.push_style_var(imgui.StyleVar_.child_rounding, theme.child_rounding)
         imgui.push_style_var(imgui.StyleVar_.cell_padding, hello_imgui.em_to_vec2(0.4, 0.2))
 
