@@ -1,22 +1,23 @@
 <h1 align="center">imgui_data_loader</h1>
 
 <p align="center">
-A themed, configurable <b>file / folder open dialog</b> widget.
-</p>
-
-<p align="center">
 <a href="https://pypi.org/project/imgui_data_loader/"><img src="https://img.shields.io/pypi/v/imgui_data_loader.svg" alt="PyPI version"></a>
 <a href="https://pypi.org/project/imgui_data_loader/"><img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+"></a>
 <a href="LICENSE"><img src="https://img.shields.io/pypi/l/imgui_data_loader.svg" alt="License: MIT"></a>
 </p>
 
+<samp>
 <p align="center">
-<a href="#install"><b>Install</b></a> ·
-<a href="#quick-start"><b>Quick start</b></a> ·
-<a href="#examples"><b>Examples</b></a> ·
-<a href="#configuration-reference"><b>Configuration</b></a> ·
-<a href="https://github.com/FlynnOConnell/imgui_data_loader/issues"><b>Issues</b></a>
+a themed, configurable <b>file / folder open dialog</b> widget
+<br>
+<br>
+<a href="#install">install</a> ·
+<a href="#quick-start">quick start</a> ·
+<a href="#examples">examples</a> ·
+<a href="#configuration-reference">configuration</a> ·
+<a href="https://github.com/FlynnOConnell/imgui_data_loader/issues">issues</a>
 </p>
+</samp>
 
 <p align="center">
   <a href="examples/dialog_full_example.py">
@@ -25,6 +26,8 @@ A themed, configurable <b>file / folder open dialog</b> widget.
   <br/>
   <em>The <a href="examples/dialog_full_example.py">full example</a> — a source selector, a two-column action grid, and a formats panel.</em>
 </p>
+
+## About
 
 Built on **imgui-file-dialog** and [imgui-bundle](https://github.com/pthom/imgui_bundle). It gives you:
 
@@ -35,6 +38,8 @@ Built on **imgui-file-dialog** and [imgui-bundle](https://github.com/pthom/imgui
 - one-shot use that returns the picked path, or embed it as a panel in a larger app
 
 ## Install
+
+**imgui_data_loader** is on [PyPI](https://pypi.org/project/imgui_data_loader/):
 
 ```bash
 pip install imgui_data_loader

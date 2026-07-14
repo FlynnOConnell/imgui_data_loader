@@ -40,7 +40,7 @@ The bundled FontAwesome build is **Solid** only; a few glyph constants (e.g. `IC
 
 ## Documentation screenshots
 
-`scripts/capture_docs.py` runs each example's real dialog in a hello_imgui window, reads back the framebuffer with `hello_imgui.final_app_window_screenshot()`, autocrops to content, and adds padding + a drop shadow. Each example exposes a `build_config()` so the same configs drive both the runnable example and the screenshot. Needs a desktop session and the `[docs]` extra (pillow + numpy). Output lands in `examples/images/`.
+`scripts/capture_docs.py` runs each example's real dialog in a hello_imgui window, reads back the framebuffer with `hello_imgui.final_app_window_screenshot()`, autocrops to content, and adds padding + a drop shadow. Each example exposes a module-level `CONFIG` so the same config drives both the runnable example and the screenshot. Needs a desktop session and the `[docs]` extra (pillow + numpy). Output lands in `examples/images/`.
 
 ## Testing notes
 
