@@ -1,13 +1,13 @@
-"""08 - Embedded in your own app (the capstone).
+"""06 - Embedded in your own app (the capstone).
 
-New vs 07: don't use run_file_dialog at all. Render the FileDialog *widget*
+New vs 05: don't use run_file_dialog at all. Render the FileDialog *widget*
 inside your own hello_imgui / immapp loop as one panel of a bigger UI. Shows:
   * close_on_select=False + take_result() polling (picking a file doesn't exit),
   * header_draw - a fully custom header,
   * footer_draw - a custom footer built from the library's button helpers,
   * ensure_assets() so the icon font is available in your own runner.
 
-    python examples/08_embedded_app.py
+    python examples/06_embedded_app.py
 """
 
 from imgui_bundle import hello_imgui, imgui, immapp

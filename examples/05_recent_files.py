@@ -1,9 +1,9 @@
-"""06 - Recent files with the built-in JSON store.
+"""05 - Recent files with the built-in JSON store.
 
-New vs 05: a JsonPreferenceStore records selections and seeds the picker's
+New vs 04: a JsonPreferenceStore records selections and seeds the picker's
 start directory from the last one used. The info card lists recent picks.
 
-    python examples/06_recent_files.py
+    python examples/05_recent_files.py
 """
 
 from imgui_bundle import imgui

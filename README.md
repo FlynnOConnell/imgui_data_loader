@@ -12,7 +12,7 @@ buttons that open the **OS-native** file picker (via
 theme, the info card, and an options popup.
 
 <p align="center">
-  <img src="docs/_images/examples/03_buttons.png" alt="imgui_data_loader file dialog" width="380">
+  <img src="docs/_images/examples/02_buttons_filetypes.png" alt="imgui_data_loader file dialog" width="360">
 </p>
 
 ## Install
@@ -24,19 +24,12 @@ pip install imgui_data_loader
 The only dependency is `imgui-bundle` (which provides imgui, hello_imgui,
 immapp, portable_file_dialogs and the FontAwesome icon font).
 
-## Quick start — one-shot
+## Quick start
 
 ```python
-from imgui_data_loader import run_file_dialog, FileDialogConfig, FileType
+from imgui_data_loader import run_file_dialog, FileDialogConfig
 
-result = run_file_dialog(FileDialogConfig(
-    title="My App",
-    subtitle="Open a dataset",
-    filetypes=[
-        FileType("Images", "*.tif *.tiff *.png *.jpg"),
-        FileType("All Files", "*"),
-    ],
-))
+result = run_file_dialog(FileDialogConfig())   # default Open File(s) / Select Folder
 
 if result:                      # truthy only for a real selection
     print(result.paths)         # list[str]
@@ -48,223 +41,275 @@ else:
 `run_file_dialog` opens the window, blocks until the user picks something or
 quits, and returns a `DialogResult`.
 
-## Customize the buttons and file types
+<p align="center">
+  <img src="docs/_images/examples/01_minimal.png" alt="minimal dialog" width="320">
+</p>
 
-By default you get **Open File(s)** and **Select Folder**. Replace them with
-whatever mix of file / folder / save buttons you need:
+## Examples
+
+Full runnable scripts are in [`examples/`](examples/) — a ladder from the
+one-liner above to a full embedded app; each adds options the previous one
+didn't. The snippets below show the essential config; the screenshots are
+captured from the **real** dialogs by `python scripts/capture_docs.py`
+(`pip install -e ".[docs]"`, needs a desktop session).
+
+### Buttons & file types
+
+Branding, a hand-built `buttons` list covering every `PickKind`, per-button
+`FileType` filters (overriding the dialog-wide default), and a `default_dir`.
+`result.kind` tells you which button produced the selection.
+[`examples/02_buttons_filetypes.py`](examples/02_buttons_filetypes.py)
 
 ```python
+from imgui_bundle import icons_fontawesome_6 as fa
 from imgui_data_loader import (
     run_file_dialog, FileDialogConfig, ButtonSpec, PickKind, FileType,
 )
-from imgui_bundle import icons_fontawesome_6 as fa
 
-cfg = FileDialogConfig(
+tiff = [FileType("TIFF", "*.tif *.tiff"), FileType("All Files", "*")]
+result = run_file_dialog(FileDialogConfig(
     title="Importer",
+    subtitle="open anything",
     buttons=[
-        ButtonSpec("Open TIFF", PickKind.OPEN_FILE, icon=fa.ICON_FA_FILE_IMAGE,
-                   multiselect=True, filetypes=[FileType("TIFF", "*.tif *.tiff")]),
-        ButtonSpec("Open project folder", PickKind.SELECT_FOLDER,
-                   icon=fa.ICON_FA_FOLDER_OPEN),
-        ButtonSpec("Save as…", PickKind.SAVE_FILE, icon=fa.ICON_FA_FLOPPY_DISK,
+        ButtonSpec("Open one image", PickKind.OPEN_FILE, icon=fa.ICON_FA_FILE_IMAGE,
+                   filetypes=tiff),
+        ButtonSpec("Open many images", PickKind.OPEN_FILE, icon=fa.ICON_FA_CLONE,
+                   multiselect=True, filetypes=tiff),
+        ButtonSpec("Open a folder", PickKind.SELECT_FOLDER, icon=fa.ICON_FA_FOLDER_OPEN),
+        ButtonSpec("Export as…", PickKind.SAVE_FILE, icon=fa.ICON_FA_FLOPPY_DISK,
                    filetypes=[FileType("Zarr", "*.zarr")]),
     ],
-)
-result = run_file_dialog(cfg)
-print(result.kind, result.paths)   # result.kind tells you which button fired
+))
+print(result.kind, result.paths)   # which button fired + what it returned
 ```
 
-## Add help text / an info card
+<p align="center">
+  <img src="docs/_images/examples/02_buttons_filetypes.png" alt="custom buttons and file types" width="360">
+</p>
 
-`info` is one callback (or a list of them) drawn inside a rounded card below
-the buttons. Use plain imgui plus the bundled helpers to match the styling:
+### Theme & info card
+
+A custom `Theme` (start from `dark()`/`light()` and `.replace()` colors) and an
+`info` card. `info` is one callback or a **list** of them — each drawn as its own
+section — using the library's themed helpers (`center_text`,
+`text_wrapped_colored`, `icon_button`). Each callback may take the `FileDialog`
+or nothing. [`examples/03_theme_info.py`](examples/03_theme_info.py)
 
 ```python
 from imgui_bundle import imgui
 from imgui_data_loader import (
-    run_file_dialog, FileDialogConfig, text_wrapped_colored,
+    run_file_dialog, FileDialogConfig, Theme, center_text, text_wrapped_colored,
 )
 
-def formats_help(dlg):                 # callback gets the FileDialog (optional arg)
-    imgui.text_colored(dlg.theme.accent, "Supported formats")
-    imgui.bullet_text("TIFF / OME-TIFF")
-    imgui.bullet_text("Zarr, HDF5, NumPy")
-    text_wrapped_colored(dlg.theme.text_dim,
-                         "Folders are opened as a stack of the files inside.")
+def formats(dlg):
+    center_text("Supported formats", dlg.theme.accent)
+    imgui.bullet_text("TIFF / Zarr / HDF5")
 
-run_file_dialog(FileDialogConfig(title="Loader", info=formats_help))
+def help_note(dlg):
+    text_wrapped_colored(dlg.theme.text_dim,
+                         "Folders load every supported file inside, sorted by name.")
+
+run_file_dialog(FileDialogConfig(
+    title="Themed Loader",
+    theme=Theme.dark().replace(accent=(0.20, 0.75, 0.70, 1.0)),
+    info=[formats, help_note],       # two sections in the card
+))
 ```
 
-A zero-argument callback works too (`def formats_help(): ...`).
+<p align="center">
+  <img src="docs/_images/examples/03_theme_info.png" alt="themed dialog with info card" width="340">
+</p>
 
-## Add an Options popup
+### Content slots & options popup
 
-Set `options_draw` and an **Options** button appears next to Quit; clicking it
-opens a popup that renders your callback. Draw any imgui you like:
+`top_draw` puts a widget row between the header and the buttons; `options_draw`
+adds an **Options** button that opens a popup (shown open below); `on_select` /
+`on_cancel` react to the outcome without inspecting the return value. Each
+imgui widget returns `(changed, new_value)` — keep the value.
+[`examples/04_slots_options.py`](examples/04_slots_options.py)
 
 ```python
 from imgui_bundle import imgui
+from imgui_data_loader import run_file_dialog, FileDialogConfig
 
-state = {"recursive": True, "cache": False}
+state = {"mode": 0, "recurse": True, "downsample": 1}
+MODES = ["2D", "3D volume", "Time series"]
 
-def options(dlg):
-    _, state["recursive"] = imgui.checkbox("Search subfolders", state["recursive"])
-    _, state["cache"]     = imgui.checkbox("Use cache", state["cache"])
-
-run_file_dialog(FileDialogConfig(title="Loader", options_draw=options))
-```
-
-## Widgets to hook up
-
-The callback slots (`options_draw`, `info`, `top_draw`, `footer_draw`) run inside
-a live imgui frame, so you can draw any of the **widgets bundled with
-imgui-bundle** — not just base imgui. Each returns `(changed, new_value)`; keep
-the value. A few worth reaching for:
-
-```python
-from imgui_bundle import imgui_toggle, imgui_knobs, imspinner, imgui_md, imgui
-
-opts = {"recursive": True, "gain": 1.0, "busy": False}
+def mode_row(dlg):
+    imgui.set_next_item_width(imgui.get_content_region_avail().x)
+    _, state["mode"] = imgui.combo("##mode", state["mode"], MODES)
 
 def options(dlg):
-    # imgui_toggle: an animated on/off switch (nicer than a checkbox)
-    _, opts["recursive"] = imgui_toggle.toggle(
-        "Search subfolders", opts["recursive"], imgui_toggle.ToggleFlags_.animated)
-    # imgui_knobs: a rotary knob for a scalar
-    _, opts["gain"] = imgui_knobs.knob("Gain", opts["gain"], 0.0, 4.0)
-    # imspinner: a busy indicator (e.g. while a background scan runs)
-    if opts["busy"]:
-        imspinner.spinner_ang("scan", 12.0, 4.0, color=imgui.ImColor(*dlg.theme.accent))
-
-def formats(dlg):
-    imgui_md.render("**Supported**: TIFF · Zarr · HDF5")   # markdown in the info card
+    _, state["recurse"]    = imgui.checkbox("Recurse into subfolders", state["recurse"])
+    _, state["downsample"] = imgui.slider_int("Downsample", state["downsample"], 1, 8)
 
 run_file_dialog(FileDialogConfig(
-    title="Importer", options_draw=options, info=formats))
+    title="Volume Loader",
+    top_draw=mode_row,
+    options_draw=options,
+    options_label="Load options",
+    quit_label="Close",
+    on_select=lambda r: print(MODES[state["mode"]], r.paths),
+    on_cancel=lambda: print("user quit"),
+))
 ```
 
-`imgui_command_palette`, `im_cool_bar`, and the rest of the bundle's widgets work
-the same way — call them from a slot and store their state.
+<p align="center">
+  <img src="docs/_images/examples/04_slots_options_popup.png" alt="options popup open" width="360">
+</p>
 
-### Persist the options with hello_imgui's preference store
+### Recent files
 
-hello_imgui ships a key/value preference store that writes into the **same layout
-`.ini`** this library already manages (`~/.config/imgui_data_loader/…`), so an
-Options toggle can survive across launches with no extra files. It stores
-**strings**, and the calls must run in the runner's `post_init` (load) and
-`before_exit` (save) callbacks — pass your own `RunnerParams` and
-`run_file_dialog` fills in the title/size/ini around them:
-
-```python
-from imgui_bundle import hello_imgui, imgui_toggle
-
-state = {"recursive": True}
-
-def load_prefs():                       # post_init
-    state["recursive"] = hello_imgui.load_user_pref("recursive") == "1"
-
-def save_prefs():                       # before_exit
-    hello_imgui.save_user_pref("recursive", "1" if state["recursive"] else "0")
-
-def options(dlg):
-    _, state["recursive"] = imgui_toggle.toggle("Search subfolders", state["recursive"])
-
-params = hello_imgui.RunnerParams()
-params.callbacks.post_init = load_prefs
-params.callbacks.before_exit = save_prefs
-
-run_file_dialog(
-    FileDialogConfig(title="Loader", options_draw=options),
-    runner_params=params,
-)
-```
-
-This is separate from `PreferenceStore` above: use `PreferenceStore` for
-recent-files / last-directory history that *your code* reads back, and
-`load_user_pref` / `save_user_pref` for small UI settings that only the dialog
-needs. Combine both freely.
-
-Use the library's own helpers (`center_text`, `text_wrapped_colored`,
-`wrapped_tooltip`, `icon_button`, `push_button_style`) alongside these to match the
-dialog's styling, and read `dlg.theme` for colors.
-
-## Theme it
-
-`Theme` is a dataclass of RGBA tuples. Start from `Theme.dark()` (default) or
-`Theme.light()` and override any color:
+Pass a `PreferenceStore`; the included `JsonPreferenceStore` seeds the picker's
+start directory from the last-used one and records selections to a JSON file.
+Draw the recents wherever you like — here in the info card.
+[`examples/05_recent_files.py`](examples/05_recent_files.py)
 
 ```python
-from imgui_data_loader import FileDialogConfig, Theme
-
-cfg = FileDialogConfig(
-    theme=Theme.dark().replace(accent=(0.85, 0.35, 0.55, 1.0)),
-)
-```
-
-## Remember recent files
-
-Pass a `PreferenceStore`. The included `JsonPreferenceStore` seeds the picker's
-start directory from the last used one and records selections to a JSON file:
-
-```python
+from imgui_bundle import imgui
 from imgui_data_loader import run_file_dialog, FileDialogConfig, JsonPreferenceStore
 
 store = JsonPreferenceStore()          # ~/.config/imgui_data_loader/recent.json
-run_file_dialog(FileDialogConfig(title="Loader", persistence=store))
+
+def recents(dlg):
+    imgui.text_colored(dlg.theme.accent, "Recent")
+    for path in store.recent()[:6]:
+        imgui.bullet_text(path)
+
+run_file_dialog(FileDialogConfig(title="Recent Files", persistence=store, info=recents))
 print(store.recent())
 ```
 
-Implement the three-method `PreferenceStore` protocol yourself to back it with
-anything (a database, your app's settings, …).
+<p align="center">
+  <img src="docs/_images/examples/05_recent_files.png" alt="recent files list" width="340">
+</p>
 
-## Embed it in your own app
+### Embed in your own app
 
-Render the `FileDialog` widget inside an existing `immapp` / hello_imgui loop
-instead of using the one-shot runner. Set `close_on_select=False` and poll
-`take_result()` each frame:
+Render the `FileDialog` **widget** inside your own hello_imgui / immapp loop as
+one panel of a bigger UI. Set `close_on_select=False` and poll `take_result()`
+each frame (or use `on_select`); `header_draw` / `footer_draw` replace the
+default header/footer; `ensure_assets()` makes the icon font available in your
+runner. [`examples/06_embedded_app.py`](examples/06_embedded_app.py)
 
 ```python
-from imgui_bundle import hello_imgui, immapp
-from imgui_data_loader import FileDialog, FileDialogConfig
+from imgui_bundle import hello_imgui, imgui, immapp
+from imgui_data_loader import FileDialog, FileDialogConfig, ensure_assets
 
-dlg = FileDialog(FileDialogConfig(title="Loader", close_on_select=False))
+ensure_assets()
+dlg = FileDialog(FileDialogConfig(close_on_select=False, show_quit_button=False))
+loaded = []
 
 def gui():
-    dlg.render()
+    dlg.render()                       # the dialog is one panel…
     result = dlg.take_result()         # None until the user picks
     if result:
-        load(result.paths)             # your code
+        loaded.extend(result.paths)
+    imgui.separator()                  # …the rest of your app follows
+    for p in loaded[-8:]:
+        imgui.bullet_text(p)
 
 params = hello_imgui.RunnerParams()
 params.callbacks.show_gui = gui
 immapp.run(params)
 ```
 
-Or react via a callback without polling: `FileDialogConfig(on_select=lambda r: load(r.paths))`.
+<p align="center">
+  <img src="docs/_images/examples/06_embedded_app.png" alt="embedded in a larger app" width="380">
+</p>
 
-## Examples
+## More specific cases
 
-A ladder of runnable examples — from the one-liner to a full embedded app — is in
-[`examples/`](examples/); each step uses options the previous one didn't. A
-screenshot gallery is in [`docs/examples.md`](docs/examples.md).
+Things you may want that the examples above don't cover.
 
-| # | shows |
-|---|-------|
-| [01](examples/01_minimal.py) | defaults + reading `DialogResult` |
-| [02](examples/02_filetypes.py) | title, `FileType` filters, `default_dir`, `result.kind` |
-| [03](examples/03_buttons.py) | custom `buttons` — file / multi / folder / save |
-| [04](examples/04_theme_info.py) | custom `Theme` + an `info` card |
-| [05](examples/05_slots_options.py) | `top_draw`, options popup, `on_select`/`on_cancel` |
-| [06](examples/06_recent_files.py) | built-in recent-files store |
-| [07](examples/07_custom_store.py) | your own `PreferenceStore` |
-| [08](examples/08_embedded_app.py) | embed the widget in your own runner |
+### Your own `PreferenceStore`
 
-The screenshots are captured from the real dialogs (needs a desktop session):
+`persistence` is just a three-method protocol (`default_dir` / `recent` /
+`record_selection`), so back "recent files" with anything — a database, your
+app's settings, a project-local file:
 
-```bash
-pip install -e ".[docs]"
-python scripts/capture_docs.py
+```python
+from pathlib import Path
+import json
+
+class ProjectStore:                    # implements the PreferenceStore protocol
+    def __init__(self, project_dir):
+        self.dir = Path(project_dir)
+        self.file = self.dir / ".loader_history.json"
+        self._recent = json.loads(self.file.read_text()) if self.file.exists() else []
+
+    def default_dir(self):  return str(self.dir)          # always start in the project
+    def recent(self):       return list(self._recent)
+    def record_selection(self, result):
+        self._recent = (result.paths + self._recent)[:10]
+        self.file.write_text(json.dumps(self._recent))
+
+run_file_dialog(FileDialogConfig(title="Project Loader", persistence=ProjectStore(".")))
 ```
+
+### Persist options across launches
+
+hello_imgui ships a key/value preference store that writes into the **same
+layout `.ini`** this library already manages, so an Options toggle survives
+across runs with no extra files. It stores **strings**, and the calls must run
+in the runner's `post_init` (load) and `before_exit` (save) callbacks — pass
+your own `RunnerParams` and `run_file_dialog` fills in the title/size/ini
+around them:
+
+```python
+from imgui_bundle import hello_imgui, imgui
+
+state = {"recursive": True}
+load  = lambda: state.update(recursive=hello_imgui.load_user_pref("recursive") == "1")
+save  = lambda: hello_imgui.save_user_pref("recursive", "1" if state["recursive"] else "0")
+
+def options(dlg):
+    _, state["recursive"] = imgui.checkbox("Search subfolders", state["recursive"])
+
+params = hello_imgui.RunnerParams()
+params.callbacks.post_init   = load
+params.callbacks.before_exit = save
+run_file_dialog(FileDialogConfig(title="Loader", options_draw=options), runner_params=params)
+```
+
+This is separate from `PreferenceStore`: use `PreferenceStore` for recent-files
+history that *your code* reads back, and `load_user_pref` / `save_user_pref` for
+small UI settings the dialog owns.
+
+### Fancier widgets from imgui-bundle
+
+The callback slots run inside a live imgui frame, so any widget **bundled with
+imgui-bundle** works — not just base imgui. A few worth reaching for from an
+`options_draw` / `info` callback:
+
+```python
+from imgui_bundle import imgui_toggle, imgui_knobs, imspinner, imgui_md, imgui
+
+def options(dlg):
+    _, opts["recursive"] = imgui_toggle.toggle(          # animated on/off switch
+        "Search subfolders", opts["recursive"], imgui_toggle.ToggleFlags_.animated)
+    _, opts["gain"] = imgui_knobs.knob("Gain", opts["gain"], 0.0, 4.0)   # rotary knob
+    if opts["busy"]:                                     # busy indicator
+        imspinner.spinner_ang("scan", 12.0, 4.0, color=imgui.ImColor(*dlg.theme.accent))
+
+def formats(dlg):
+    imgui_md.render("**Supported**: TIFF · Zarr · HDF5")  # markdown in the info card
+```
+
+`imgui_command_palette`, `im_cool_bar`, and the rest of the bundle work the same
+way. Pair them with the library's helpers (`center_text`, `icon_button`,
+`push_button_style`, …) and `dlg.theme` to match the styling.
+
+### Where the layout `.ini` goes
+
+hello_imgui persists window layout to a small `.ini`. By default `run_file_dialog`
+writes it to an **absolute** path under your config dir —
+`~/.config/imgui_data_loader/file_dialog.ini` (honoring `$XDG_CONFIG_HOME`) — so it
+never lands in the current working directory. Change it with
+`FileDialogConfig(ini_path="/path/to/my_dialog.ini")` (the parent dir is created).
+When you **embed** the dialog with your own runner, set `params.ini_filename`
+(and optionally `params.ini_folder_type`) yourself — `run_file_dialog` only fills
+it in when you leave it unset.
 
 ## Configuration reference
 
@@ -288,25 +333,10 @@ python scripts/capture_docs.py
 | `quit_on_escape` | `True` | Esc cancels |
 | `close_on_select` | `True` | exit the run loop after a pick (one-shot mode) |
 | `window_title`, `window_size`, `resizable` | — | OS window (one-shot) |
-| `ini_path` | `~/.config/imgui_data_loader/…` | where the layout `.ini` is saved (see below) |
+| `ini_path` | `~/.config/imgui_data_loader/…` | where the layout `.ini` is saved |
 | `assets_folder` | imgui-bundle's | folder providing the icon font |
 | `persistence` | `None` | a `PreferenceStore` |
 | `on_select`, `on_cancel` | `None` | result callbacks |
-
-## Where the layout `.ini` goes
-
-hello_imgui persists window layout to a small `.ini`. By default `run_file_dialog`
-writes it to an **absolute** path under your config dir —
-`~/.config/imgui_data_loader/file_dialog.ini` (honoring `$XDG_CONFIG_HOME`) — so it
-never lands in the current working directory. Change it with:
-
-```python
-run_file_dialog(FileDialogConfig(title="…", ini_path="/path/to/my_dialog.ini"))
-```
-
-The parent directory is created if needed. When you **embed** the dialog with your
-own runner, set `params.ini_filename` (and optionally `params.ini_folder_type`)
-yourself — `run_file_dialog` only fills it in when you leave it unset.
 
 ## Notes
 

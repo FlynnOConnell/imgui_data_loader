@@ -9,7 +9,7 @@ Needs a desktop session (framebuffer screenshots require a real GL surface) plus
 the docs extras:  pip install -e ".[docs]"  (pillow + numpy).
 
     python scripts/capture_docs.py            # capture everything
-    python scripts/capture_docs.py --one 03_buttons [--popup]   # one (worker)
+    python scripts/capture_docs.py --one 04_slots_options [--popup]   # one (worker)
 """
 
 import importlib.util
@@ -26,13 +26,11 @@ OUTPUT_DIR = REPO / "docs" / "_images" / "examples"
 
 EXAMPLES = [
     "01_minimal",
-    "02_filetypes",
-    "03_buttons",
-    "04_theme_info",
-    "05_slots_options",
-    "06_recent_files",
-    "07_custom_store",
-    "08_embedded_app",
+    "02_buttons_filetypes",
+    "03_theme_info",
+    "04_slots_options",
+    "05_recent_files",
+    "06_embedded_app",
 ]
 
 # style_image knobs (matches the mbo_utilities docs treatment)

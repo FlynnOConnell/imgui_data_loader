@@ -1,12 +1,12 @@
-"""05 - Content slots + options popup + result callbacks.
+"""04 - Content slots + options popup + result callbacks.
 
-New vs 04:
+New vs 03:
   * top_draw   - a widget row between the header and the buttons (a "mode" combo)
   * options_draw / options_label - an Options popup with live controls
   * on_select / on_cancel - react to the outcome without inspecting the return
   * quit_label - rename the Quit button
 
-    python examples/05_slots_options.py
+    python examples/04_slots_options.py
 """
 
 from dataclasses import dataclass, field

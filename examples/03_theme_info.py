@@ -1,11 +1,11 @@
-"""04 - Theme + info card.
+"""03 - Theme + info card.
 
-New vs 03: a custom Theme (start from dark()/light() and .replace() colors) and
+New vs 02: a custom Theme (start from dark()/light() and .replace() colors) and
 an `info` card. `info` is a *list* of callbacks here - each is drawn as its own
 section - and the sections use the library's themed helpers (center_text,
 text_wrapped_colored, icon_button).
 
-    python examples/04_theme_info.py
+    python examples/03_theme_info.py
 """
 
 import webbrowser

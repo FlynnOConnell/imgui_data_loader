@@ -1,11 +1,15 @@
-"""03 - Custom buttons: every PickKind in one dialog.
+"""02 - Buttons + file types.
 
-New vs 02: a hand-built `buttons` list covering all four pick kinds - open a
-single file, open many files, select a folder, and save-as - each with its own
-icon, tooltip, native-dialog title, and (for file/save) its own filters.
+New vs 01: branding (title/subtitle), a hand-built `buttons` list covering every
+PickKind - open one file, open many, select a folder, save-as - each with its
+own icon, tooltip, and filters; a dialog-wide `filetypes` default; a
+`default_dir` to start the picker in; and reading `result.kind` to see which
+button produced the selection.
 
-    python examples/03_buttons.py
+    python examples/02_buttons_filetypes.py
 """
+
+from pathlib import Path
 
 from imgui_bundle import icons_fontawesome_6 as fa
 
@@ -19,16 +23,18 @@ from imgui_data_loader import (
 
 
 def build_config() -> FileDialogConfig:
-    tiff = [FileType("TIFF", "*.tif *.tiff"), FileType("All Files", "*")]
+    images = [FileType("TIFF", "*.tif *.tiff"), FileType("All Files", "*")]
     return FileDialogConfig(
         title="Importer",
-        subtitle="pick anything",
+        subtitle="open anything",
+        default_dir=str(Path.home()),
+        filetypes=[FileType("Recordings", "*.dat *.bin *.nwb"), FileType("All Files", "*")],
         buttons=[
             ButtonSpec(
                 "Open one image",
                 PickKind.OPEN_FILE,
                 icon=fa.ICON_FA_FILE_IMAGE,
-                filetypes=tiff,
+                filetypes=images,          # overrides the dialog-wide filetypes
                 tooltip="Pick a single TIFF",
             ),
             ButtonSpec(
@@ -36,7 +42,7 @@ def build_config() -> FileDialogConfig:
                 PickKind.OPEN_FILE,
                 multiselect=True,
                 icon=fa.ICON_FA_CLONE,
-                filetypes=tiff,
+                filetypes=images,
                 tooltip="Pick several TIFFs at once",
             ),
             ButtonSpec(
@@ -61,6 +67,7 @@ def main() -> None:
     if not result:
         print("cancelled")
         return
+    # result.kind is the PickKind of the button that produced the selection
     if result.kind is PickKind.SAVE_FILE:
         print("save to:", result.path)
     elif result.kind is PickKind.SELECT_FOLDER:
