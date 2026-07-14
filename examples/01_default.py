@@ -1,9 +1,9 @@
-"""01 - Minimal: one call, default buttons.
+"""01 - Default: one call, everything defaulted.
 
-The floor of the ladder. `run_file_dialog()` with no configuration gives an
-"Open File(s)" + "Select Folder" launcher and returns a DialogResult.
+`run_file_dialog()` with no configuration gives an "Open File(s)" + "Select
+Folder" launcher and returns a DialogResult.
 
-    python examples/01_minimal.py
+    python examples/01_default.py
 """
 
 from imgui_data_loader import FileDialogConfig, run_file_dialog
