@@ -56,6 +56,7 @@ def run_file_dialog(
             parent = os.path.dirname(ini)
             if parent:
                 os.makedirs(parent, exist_ok=True)
+    dlg.apply_host_theme(params)
     params.callbacks.show_gui = dlg.render
 
     addons = immapp.AddOnsParams()

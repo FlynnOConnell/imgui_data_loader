@@ -77,6 +77,37 @@ class FileDialog:
         """Programmatically open the Options popup on the next frame."""
         self._open_options = True
 
+    def pick(self, button: ButtonSpec) -> None:
+        """Open the OS-native picker described by ``button``.
+
+        This is what a built-in button does when clicked. Call it from your own
+        content slot when you draw custom buttons instead of using
+        ``config.buttons`` — the completed selection lands on
+        :attr:`result` / ``on_select`` exactly the same way.
+        """
+        self._launch(button)
+
+    def apply_host_theme(self, runner_params) -> None:
+        """Point the hosting window's background at ``theme.bg``.
+
+        The dialog colors its own frames every frame, but the window *behind*
+        them is painted from the imgui style's ``window_bg`` before ``render``
+        runs — so a light theme would otherwise sit on hello_imgui's default
+        dark backdrop. Call this once on the ``RunnerParams`` before running
+        (``run_file_dialog`` does it for you); any existing
+        ``setup_imgui_style`` callback is preserved.
+        """
+        bg = to_vec4(self.theme.bg)
+        runner_params.imgui_window_params.background_color = bg
+        prev = runner_params.callbacks.setup_imgui_style
+
+        def _setup_style():
+            if callable(prev):
+                prev()
+            imgui.get_style().set_color_(imgui.Col_.window_bg, bg)
+
+        runner_params.callbacks.setup_imgui_style = _setup_style
+
     def cancel(self) -> None:
         """Finish with an empty, cancelled result (as the Quit button does)."""
         self._finish(DialogResult(paths=[], kind=None, cancelled=True))

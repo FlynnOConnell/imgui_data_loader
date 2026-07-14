@@ -3,13 +3,13 @@
 Mirrors mbo_utilities/scripts/capture_docs.py: each example's *real* dialog is
 run in a hello_imgui window and its framebuffer is read back with
 hello_imgui.final_app_window_screenshot(), then autocropped to the content and
-given padding + a soft drop shadow. Images land under docs/_images/examples/.
+given padding + a soft drop shadow. Images land under examples/images/.
 
 Needs a desktop session (framebuffer screenshots require a real GL surface) plus
 the docs extras:  pip install -e ".[docs]"  (pillow + numpy).
 
     python scripts/capture_docs.py            # capture everything
-    python scripts/capture_docs.py --one dialog_complex [--popup]   # one (worker)
+    python scripts/capture_docs.py --one dialog_full_example [--popup]   # one (worker)
 """
 
 import importlib.util
@@ -22,11 +22,11 @@ from PIL import Image, ImageDraw, ImageFilter
 
 REPO = Path(__file__).resolve().parent.parent
 EXAMPLES_DIR = REPO / "examples"
-OUTPUT_DIR = REPO / "docs" / "_images" / "examples"
+OUTPUT_DIR = REPO / "examples" / "images"
 
 EXAMPLES = [
     "dialog_minimal",
-    "dialog_complex",
+    "dialog_full_example",
     "dialog_themes",
 ]
 
@@ -140,6 +140,7 @@ def _capture_one(stem: str, popup: bool = False) -> None:
     params.fps_idling.enable_idling = False
     params.ini_folder_type = hello_imgui.IniFolderType.temp_folder
     params.ini_filename = f"idl_capture_{stem}.ini"
+    dlg.apply_host_theme(params)
     params.callbacks.show_gui = dlg.render
     params.callbacks.pre_new_frame = pre_new_frame
 

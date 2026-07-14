@@ -25,7 +25,7 @@ from imgui_data_loader import (
     run_file_dialog,
 )
 
-WINDOW_SIZE = (400, 460)
+WINDOW_SIZE = (400, 300)
 
 
 def footer(dlg) -> None:

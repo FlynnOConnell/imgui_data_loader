@@ -154,3 +154,24 @@ def test_widget_constructs_without_context():
     assert dlg.result is None
     assert dlg.take_result() is None
     assert dlg.theme is not None
+    assert callable(dlg.pick)
+
+
+def test_apply_host_theme_wires_background():
+    # apply_host_theme points the host window's clear color at theme.bg and wraps
+    # (not clobbers) any existing setup_imgui_style callback. Pure param wiring —
+    # no imgui context needed.
+    from imgui_bundle import hello_imgui
+
+    dlg = FileDialog(FileDialogConfig(theme=Theme.light()))
+    params = hello_imgui.RunnerParams()
+    prev = lambda: None  # noqa: E731 - a user-supplied style callback to preserve
+    params.callbacks.setup_imgui_style = prev
+
+    dlg.apply_host_theme(params)
+
+    bg = params.imgui_window_params.background_color
+    assert (bg.x, bg.y, bg.z, bg.w) == pytest.approx(Theme.light().bg, abs=1e-6)
+    # the callback was replaced with a wrapper (which chains prev at run time)
+    assert params.callbacks.setup_imgui_style is not prev
+    assert callable(params.callbacks.setup_imgui_style)
