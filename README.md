@@ -37,6 +37,9 @@ Built on **imgui-file-dialog** and [imgui-bundle](https://github.com/pthom/imgui
 - customizable file-type filters, theme, an info card, and an options popup
 - one-shot use that returns the picked path, or embed it as a panel in a larger app
 
+What you can do with imgui is endless, I often take inspiration from
+[this list of imgui examples](https://github.com/ocornut/imgui/issues/3488#issuecomment-698634017).
+
 ## Install
 
 **imgui_data_loader** is on [PyPI](https://pypi.org/project/imgui_data_loader/):
@@ -70,21 +73,11 @@ quits, and returns a `DialogResult`.
 Runnable scripts in [`examples/`](examples/) — run them on a desktop session
 (`python examples/dialog_minimal.py`).
 
-| name | file | shows |
-|------|------|-------|
-| dialog_minimal | [`dialog_minimal.py`](examples/dialog_minimal.py) | the one call — `run_file_dialog()` with defaults, reading the `DialogResult` |
-| dialog_full_example | [`dialog_full_example.py`](examples/dialog_full_example.py) | the screenshot above — a source selector, a two-column action grid (`dlg.pick`), a formats panel with recent files, a custom `Theme`, a load-options popup, persistence, and callbacks |
-| dialog_themes | [`dialog_themes.py`](examples/dialog_themes.py) | a light `Theme` in a resized window, with hand-placed UI — an anchored popup (`set_next_window_pos`) and a right-aligned action via the cursor API, through `footer_draw` |
-
-## What you can do with imgui is endless
-
-The callback slots (`header_draw`, `top_draw`, `info`, `options_draw`,
-`footer_draw`) all run inside a live imgui frame, so any widget **bundled with
-imgui-bundle** works — animated toggles, rotary knobs, spinners, markdown,
-command palettes, cool bars, and the rest. Pair them with the library's themed
-helpers (`center_text`, `icon_button`, `push_button_style`, …) and `dlg.theme`
-to match the styling. For a sense of just how far plain imgui goes, browse
-[this long thread of community examples](https://github.com/ocornut/imgui/issues/3488#issuecomment-698634017).
+| name | file | preview |
+|------|------|:-------:|
+| dialog_minimal | [`dialog_minimal.py`](examples/dialog_minimal.py) | <a href="examples/dialog_minimal.py"><img src="examples/images/dialog_minimal.png" width="240" alt="dialog_minimal preview"></a> |
+| dialog_full_example | [`dialog_full_example.py`](examples/dialog_full_example.py) | <a href="examples/dialog_full_example.py"><img src="examples/images/dialog_full_example.png" width="240" alt="dialog_full_example preview"></a> |
+| dialog_themes | [`dialog_themes.py`](examples/dialog_themes.py) | <a href="examples/dialog_themes.py"><img src="examples/images/dialog_themes.png" width="240" alt="dialog_themes preview"></a> |
 
 ## Configuration reference
 
@@ -112,6 +105,17 @@ to match the styling. For a sense of just how far plain imgui goes, browse
 | `assets_folder` | imgui-bundle's | folder providing the icon font |
 | `persistence` | `None` | a `PreferenceStore` |
 | `on_select`, `on_cancel` | `None` | result callbacks |
+
+### Draw slots
+
+`header_draw`, `top_draw`, `info`, `options_draw`, and `footer_draw` let you
+render your own content in specific regions — the header block, a row above the
+buttons, the info card, the options popup, and the footer. Each runs inside a
+live imgui frame, so any widget **bundled with imgui-bundle** works: animated
+toggles, rotary knobs, spinners, markdown, command palettes, cool bars, and the
+rest. Pair them with the library's themed helpers (`center_text`, `icon_button`,
+`push_button_style`, …) and `dlg.theme` so your additions match the dialog's
+styling.
 
 ## Notes
 
