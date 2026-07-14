@@ -8,7 +8,7 @@
 
 <samp>
 <p align="center">
-a themed, configurable <b>file / folder open dialog</b> widget
+A configurable <b>file / folder open dialog</b> widget in python
 <br>
 <br>
 <a href="#install">install</a> ·
@@ -70,8 +70,7 @@ quits, and returns a `DialogResult`.
 
 ## Examples
 
-Runnable scripts in [`examples/`](examples/) — run them on a desktop session
-(`python examples/dialog_minimal.py`).
+See all examples in [`examples/`](examples/).
 
 | name | file | preview |
 |------|------|:-------:|
@@ -131,8 +130,7 @@ styling.
 This dialog started life inside
 [mbo_utilities](https://github.com/MillerBrainObservatory/mbo_utilities) at the
 [Miller Brain Observatory](https://github.com/MillerBrainObservatory), where the
-original file/folder loader was built. `imgui_data_loader` extracts and
-generalizes it into a standalone, installable library.
+original file/folder loader was built.
 
 ## License
 
