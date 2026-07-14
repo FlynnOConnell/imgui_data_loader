@@ -7,7 +7,7 @@ name = "imgui_data_loader"
 version = "0.1.0"
 description = "A themed, configurable imgui file/folder open dialog widget built on imgui-bundle."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Flynn OConnell", email = "flynnoconnell@gmail.com" }]
