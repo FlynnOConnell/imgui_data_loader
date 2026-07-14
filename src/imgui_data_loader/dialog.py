@@ -272,8 +272,7 @@ class FileDialog:
             return
         theme = self.theme
         imgui.dummy(hello_imgui.em_to_vec2(0, 0.2))
-        avail_w = imgui.get_content_region_avail().x
-        card_w = avail_w - hello_imgui.em_size(1)
+        card_w = self._button_width()
         center_next_item(card_w)
 
         imgui.push_style_color(imgui.Col_.child_bg, to_vec4(theme.bg_card))
