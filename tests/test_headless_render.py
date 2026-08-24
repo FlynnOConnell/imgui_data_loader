@@ -183,6 +183,29 @@ def test_widget_constructs_without_context():
     assert callable(dlg.pick)
 
 
+def test_ensure_assets_does_not_clobber_host_folder(tmp_path):
+    # A host app that configured its own assets folder (containing the icon
+    # font) must keep it: ensure_assets() with no argument may only add a
+    # search path, never replace the folder.
+    from imgui_bundle import hello_imgui
+    from imgui_data_loader._assets import _ICON_FONT, imgui_bundle_assets_dir
+    import shutil
+
+    host = tmp_path / "host_assets"
+    (host / "fonts").mkdir(parents=True)
+    src = imgui_bundle_assets_dir()
+    assert src is not None
+    shutil.copy2(str((__import__("pathlib").Path(src) / _ICON_FONT)), str(host / _ICON_FONT))
+    marker = host / "host_only.txt"
+    marker.write_text("x")
+
+    hello_imgui.set_assets_folder(str(host))
+    ensure_assets()
+    # host assets still resolve -> the folder was not replaced
+    assert hello_imgui.asset_exists("host_only.txt")
+    assert hello_imgui.asset_exists(_ICON_FONT)
+
+
 def test_apply_host_theme_wires_background():
     # apply_host_theme points the host window's clear color at theme.bg and wraps
     # (not clobbers) any existing setup_imgui_style callback. Pure param wiring —

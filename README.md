@@ -101,7 +101,7 @@ See all examples in [`examples/`](examples/).
 | `close_on_select` | `True` | exit the run loop after a pick or cancel (one-shot mode) |
 | `window_title`, `window_size`, `resizable` | — | OS window (one-shot) |
 | `ini_path` | `~/.config/imgui_data_loader/…` | where the layout `.ini` is saved |
-| `assets_folder` | imgui-bundle's | folder providing the icon font |
+| `assets_folder` | `None` | folder providing the icon font; unset never overrides a host app's assets folder |
 | `persistence` | `None` | a `PreferenceStore` |
 | `on_select`, `on_cancel` | `None` | result callbacks |
 
