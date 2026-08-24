@@ -1,0 +1,182 @@
+"""Capture documentation screenshots of the example dialogs.
+
+Mirrors mbo_utilities/scripts/capture_docs.py: each example's *real* dialog is
+run in a hello_imgui window and its framebuffer is read back with
+hello_imgui.final_app_window_screenshot(), then autocropped to the content and
+given padding + a soft drop shadow. Images land under examples/images/.
+
+Needs a desktop session (framebuffer screenshots require a real GL surface) plus
+the docs extras:  pip install -e ".[docs]"  (pillow + numpy).
+
+    python scripts/capture_docs.py            # capture everything
+    python scripts/capture_docs.py --one dialog_full_example [--popup]   # one (worker)
+"""
+
+import importlib.util
+import subprocess
+import sys
+from pathlib import Path
+
+import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
+
+REPO = Path(__file__).resolve().parent.parent
+EXAMPLES_DIR = REPO / "examples"
+OUTPUT_DIR = REPO / "examples" / "images"
+
+EXAMPLES = [
+    "dialog_minimal",
+    "dialog_full_example",
+    "dialog_themes",
+]
+
+# style_image knobs (matches the mbo_utilities docs treatment)
+PADDING = 24
+SHADOW_BLUR = 12
+SHADOW_OFFSET = (0, 6)
+SHADOW_OPACITY = 0.28
+CORNER_RADIUS = 14  # rounds the captured card so its curved edge shows on transparency
+BORDER_WIDTH = 2
+
+
+def _rgba255(color, min_alpha: float = 0.0):
+    """An (r, g, b[, a]) 0..1 tuple -> a 0..255 RGBA tuple for PIL."""
+    r, g, b = color[0], color[1], color[2]
+    a = color[3] if len(color) > 3 else 1.0
+    return (int(r * 255), int(g * 255), int(b * 255), int(max(a, min_alpha) * 255))
+
+
+def style_image(img: Image.Image, output_path: Path, border=(0.35, 0.35, 0.37, 0.7)) -> None:
+    """Round the card's corners, stroke its border, add a shaped drop shadow, and
+    save as a PNG with a transparent background so the curved, bordered edge reads
+    cleanly on any page. ``border`` is the theme's border color (0..1 RGBA)."""
+    if img.mode != "RGBA":
+        img = img.convert("RGBA")
+    w, h = img.size
+
+    # 1. rounded-corner alpha mask -> everything outside the curve is transparent
+    mask = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, w - 1, h - 1], radius=CORNER_RADIUS, fill=255)
+    img.putalpha(mask)
+
+    # 2. stroke the border along the rounded edge, in the theme's border color
+    inset = BORDER_WIDTH / 2
+    ImageDraw.Draw(img).rounded_rectangle(
+        [inset, inset, w - 1 - inset, h - 1 - inset],
+        radius=CORNER_RADIUS,
+        outline=_rgba255(border, min_alpha=0.85),
+        width=BORDER_WIDTH,
+    )
+
+    # 3. a soft drop shadow that follows the rounded silhouette (not a hard rect)
+    margin = SHADOW_BLUR * 2
+    out = Image.new("RGBA", (w + PADDING * 2, h + PADDING * 2), (0, 0, 0, 0))
+    shadow_alpha = Image.new("L", (w + margin, h + margin), 0)
+    shadow_alpha.paste(mask.point(lambda a: int(a * SHADOW_OPACITY)), (margin // 2, margin // 2))
+    shadow_alpha = shadow_alpha.filter(ImageFilter.GaussianBlur(SHADOW_BLUR))
+    shadow = Image.new("RGBA", shadow_alpha.size, (0, 0, 0, 0))
+    shadow.putalpha(shadow_alpha)  # black, shaped by the rounded mask
+    out.paste(
+        shadow,
+        (PADDING + SHADOW_OFFSET[0] - margin // 2, PADDING + SHADOW_OFFSET[1] - margin // 2),
+        shadow,
+    )
+
+    # 4. the rounded card on top (composite through its own alpha)
+    out.paste(img, (PADDING, PADDING), img)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    out.save(output_path, "PNG")
+    print(f"  -> {output_path.relative_to(REPO)}")
+
+
+def autocrop(arr: np.ndarray, margin: int = 10, tol: int = 18) -> np.ndarray:
+    """Crop to the bounding box of pixels that differ from the corner (window
+    background) color, leaving a small margin. Trims dead space around the
+    dialog regardless of window size."""
+    bg = arr[0, 0].astype(int)
+    diff = np.abs(arr.astype(int) - bg).sum(axis=2)
+    ys, xs = np.where(diff > tol)
+    if len(ys) == 0:
+        return arr
+    y0 = max(0, int(ys.min()) - margin)
+    x0 = max(0, int(xs.min()) - margin)
+    y1 = min(arr.shape[0], int(ys.max()) + 1 + margin)
+    x1 = min(arr.shape[1], int(xs.max()) + 1 + margin)
+    return arr[y0:y1, x0:x1]
+
+
+def _load_example(stem: str):
+    spec = importlib.util.spec_from_file_location(f"_ex_{stem}", EXAMPLES_DIR / f"{stem}.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _capture_one(stem: str, popup: bool = False) -> None:
+    from imgui_bundle import hello_imgui, immapp
+
+    from imgui_data_loader import FileDialog, ensure_assets
+
+    mod = _load_example(stem)
+    dlg = FileDialog(mod.CONFIG)
+    size = getattr(mod, "WINDOW_SIZE", (360, 780))
+
+    ensure_assets()
+    frames = {"n": 0}
+
+    def pre_new_frame():
+        frames["n"] += 1
+        if popup and frames["n"] == 4:
+            dlg.open_options()
+        if frames["n"] >= 12:
+            hello_imgui.get_runner_params().app_shall_exit = True
+
+    params = hello_imgui.RunnerParams()
+    params.app_window_params.window_title = stem
+    params.app_window_params.window_geometry.size = tuple(size)
+    params.app_window_params.window_geometry.size_auto = False
+    params.app_window_params.restore_previous_geometry = False  # honor the size
+    params.app_window_params.resizable = False
+    params.fps_idling.enable_idling = False
+    params.ini_folder_type = hello_imgui.IniFolderType.temp_folder
+    params.ini_filename = f"idl_capture_{stem}.ini"
+    dlg.apply_host_theme(params)
+    params.callbacks.show_gui = dlg.render
+    params.callbacks.pre_new_frame = pre_new_frame
+
+    addons = immapp.AddOnsParams()
+    addons.with_markdown = True
+    immapp.run(params, addons)
+
+    shot = np.asarray(hello_imgui.final_app_window_screenshot())
+    if shot.size == 0:
+        print(f"  {stem}: empty screenshot buffer (need a desktop session)")
+        return
+    cropped = autocrop(shot[..., :3])
+    name = f"{stem}_popup.png" if popup else f"{stem}.png"
+    style_image(Image.fromarray(cropped), OUTPUT_DIR / name, border=dlg.theme.border)
+
+
+def _has_options(stem: str) -> bool:
+    return getattr(_load_example(stem).CONFIG, "options_draw", None) is not None
+
+
+def main() -> None:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    for stem in EXAMPLES:
+        print(f"{stem} ...")
+        # isolate each capture in a subprocess: fresh module + GL state per run
+        subprocess.run([sys.executable, str(Path(__file__).resolve()), "--one", stem], check=False)
+        if _has_options(stem):
+            subprocess.run(
+                [sys.executable, str(Path(__file__).resolve()), "--one", stem, "--popup"],
+                check=False,
+            )
+
+
+if __name__ == "__main__":
+    if "--one" in sys.argv:
+        i = sys.argv.index("--one")
+        _capture_one(sys.argv[i + 1], popup="--popup" in sys.argv)
+    else:
+        main()
