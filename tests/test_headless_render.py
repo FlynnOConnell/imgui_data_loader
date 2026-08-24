@@ -148,6 +148,32 @@ def test_ini_path_is_configurable(tmp_path):
     assert ini.exists()  # written exactly where configured, cwd untouched
 
 
+def test_embedded_cancel_does_not_exit_host():
+    # With close_on_select=False the dialog is embedded in someone else's run
+    # loop: cancel() records a cancelled result but must not touch the host's
+    # app_shall_exit.
+    cancelled = {"n": 0}
+    dlg = FileDialog(
+        FileDialogConfig(close_on_select=False, on_cancel=lambda: cancelled.update(n=1))
+    )
+    dlg.cancel()
+    r = dlg.take_result()
+    assert r is not None and r.cancelled and r.paths == []
+    assert cancelled["n"] == 1
+
+
+def test_oneshot_cancel_requests_exit(monkeypatch):
+    # Default (one-shot) config still exits the run loop on cancel.
+    calls = {"n": 0}
+    monkeypatch.setattr(FileDialog, "_request_exit", staticmethod(lambda: calls.update(n=calls["n"] + 1)))
+    dlg = FileDialog(FileDialogConfig())
+    dlg.cancel()
+    assert calls["n"] == 1
+    dlg2 = FileDialog(FileDialogConfig(close_on_select=False))
+    dlg2.cancel()
+    assert calls["n"] == 1  # unchanged
+
+
 def test_widget_constructs_without_context():
     # constructing the widget must not require an imgui frame
     dlg = FileDialog(FileDialogConfig(title="x"))

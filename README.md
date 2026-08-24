@@ -98,7 +98,7 @@ See all examples in [`examples/`](examples/).
 | `show_options_button` | `True` | show Options (needs `options_draw`) |
 | `show_quit_button`, `quit_label` | `True`, `"Quit"` | Quit button |
 | `quit_on_escape` | `True` | Esc cancels |
-| `close_on_select` | `True` | exit the run loop after a pick (one-shot mode) |
+| `close_on_select` | `True` | exit the run loop after a pick or cancel (one-shot mode) |
 | `window_title`, `window_size`, `resizable` | — | OS window (one-shot) |
 | `ini_path` | `~/.config/imgui_data_loader/…` | where the layout `.ini` is saved |
 | `assets_folder` | imgui-bundle's | folder providing the icon font |

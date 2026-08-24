@@ -109,7 +109,11 @@ class FileDialog:
         runner_params.callbacks.setup_imgui_style = _setup_style
 
     def cancel(self) -> None:
-        """Finish with an empty, cancelled result (as the Quit button does)."""
+        """Finish with an empty, cancelled result (as the Quit button does).
+
+        Exits the run loop only when ``close_on_select`` is set; an embedded
+        dialog just records the cancelled result for ``take_result``.
+        """
         self._finish(DialogResult(paths=[], kind=None, cancelled=True))
 
     # ------------------------------------------------------------------
@@ -180,7 +184,10 @@ class FileDialog:
         else:
             if cfg.on_cancel is not None:
                 cfg.on_cancel()
-            self._request_exit()
+            # Embedded dialogs (close_on_select=False) must not kill the host
+            # app's run loop; the host polls take_result() and decides itself.
+            if cfg.close_on_select:
+                self._request_exit()
 
     @staticmethod
     def _request_exit() -> None:
