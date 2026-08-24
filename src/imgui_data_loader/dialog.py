@@ -39,6 +39,23 @@ from .widgets import (
 )
 
 
+def _store_default_dir(store, kind: Optional[PickKind]) -> str:
+    """Call ``store.default_dir``, passing ``kind`` only if it takes an arg
+    (older stores implement a no-argument ``default_dir()``)."""
+    import inspect
+
+    fn = store.default_dir
+    try:
+        params = inspect.signature(fn).parameters.values()
+        takes_kind = any(
+            p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD, p.VAR_POSITIONAL)
+            for p in params
+        )
+    except (TypeError, ValueError):
+        takes_kind = False
+    return fn(kind) if takes_kind else fn()
+
+
 class FileDialog:
     """A themed, configurable file/folder open dialog.
 
@@ -119,13 +136,13 @@ class FileDialog:
     # ------------------------------------------------------------------
     # native picker plumbing
     # ------------------------------------------------------------------
-    def _start_dir(self) -> str:
+    def _start_dir(self, kind: Optional[PickKind] = None) -> str:
         if self.config.default_dir:
             return str(self.config.default_dir)
         store = self.config.persistence
         if store is not None:
             try:
-                d = store.default_dir()
+                d = _store_default_dir(store, kind)
                 if d:
                     return str(d)
             except Exception:
@@ -137,7 +154,7 @@ class FileDialog:
         return flatten_filters(fts or [FileType("All Files", "*")])
 
     def _launch(self, btn: ButtonSpec) -> None:
-        start = self._start_dir()
+        start = self._start_dir(btn.kind)
         title = btn.title or btn.label
         if btn.kind == PickKind.OPEN_FILE:
             opt = pfd.opt.multiselect if btn.multiselect else pfd.opt.none

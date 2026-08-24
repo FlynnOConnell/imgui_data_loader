@@ -10,9 +10,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from ._assets import config_dir
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .config import PickKind
 
 try:  # Protocol is 3.8+, runtime_checkable too
     from typing import Protocol, runtime_checkable
@@ -27,8 +30,13 @@ except ImportError:  # pragma: no cover
 class PreferenceStore(Protocol):
     """Minimal interface the dialog uses for persistence."""
 
-    def default_dir(self) -> str:
-        """Directory to open the native picker in (``""`` to fall back)."""
+    def default_dir(self, kind: "Optional[PickKind]" = None) -> str:
+        """Directory to open the native picker in (``""`` to fall back).
+
+        ``kind`` is the pick the button is about to launch, so a store can
+        keep separate last-dirs for e.g. files vs folders. Stores may ignore
+        it; a no-argument ``default_dir()`` is also accepted by the dialog.
+        """
         ...
 
     def recent(self) -> List[str]:
@@ -49,7 +57,7 @@ class JsonPreferenceStore:
     def __init__(self, path: Optional[str] = None, max_recent: int = 20):
         self.path = Path(path) if path else (config_dir() / "recent.json")
         self.max_recent = max_recent
-        self._data = {"recent": [], "last_dir": ""}
+        self._data = {"recent": [], "last_dir": "", "last_dirs": {}}
         self._load()
 
     def _load(self) -> None:
@@ -68,7 +76,12 @@ class JsonPreferenceStore:
         except Exception:
             pass
 
-    def default_dir(self) -> str:
+    def default_dir(self, kind=None) -> str:
+        key = getattr(kind, "value", kind)
+        if key:
+            d = self._data.get("last_dirs", {}).get(str(key), "")
+            if d and Path(d).exists():
+                return d
         d = self._data.get("last_dir", "")
         return d if d and Path(d).exists() else ""
 
@@ -84,5 +97,10 @@ class JsonPreferenceStore:
             recent.insert(0, p)
         self._data["recent"] = recent[: self.max_recent]
         first = Path(paths[0])
-        self._data["last_dir"] = str(first if first.is_dir() else first.parent)
+        last = str(first if first.is_dir() else first.parent)
+        self._data["last_dir"] = last
+        kind = getattr(result, "kind", None)
+        key = getattr(kind, "value", kind)
+        if key:
+            self._data.setdefault("last_dirs", {})[str(key)] = last
         self._save()
