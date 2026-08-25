@@ -47,7 +47,7 @@ def run_file_dialog(
     # Route the layout .ini. hello_imgui resolves ini_filename relative to
     # ini_folder_type (default: the current working directory), so an empty or
     # relative name would drop a file next to wherever the app was launched.
-    # Pin it to an absolute path instead (default: ~/.config/imgui_data_loader).
+    # Pin it to an absolute path instead (default: ~/.imgui_data_loader).
     if not params.ini_filename:
         ini = config.ini_path or default_ini_path()
         params.ini_filename = ini

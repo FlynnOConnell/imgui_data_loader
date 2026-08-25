@@ -1,4 +1,14 @@
-"""Asset / config-path helpers.
+"""Asset / per-user path helpers.
+
+Everything this library writes or looks for on disk lives under one dot
+directory, ``~/.imgui_data_loader`` (override with the
+``IMGUI_DATA_LOADER_HOME`` env var):
+
+- ``file_dialog.ini`` — hello_imgui's window-layout file (``run_file_dialog``
+  pins it here unless ``config.ini_path`` says otherwise)
+- ``recent.json`` — :class:`~imgui_data_loader.JsonPreferenceStore`'s default
+  location for recent files + last-used directories
+- ``assets/`` — optional user assets folder, searched for the icon font
 
 The dialog relies on the FontAwesome 6 font so button icons render. That font
 ships inside ``imgui-bundle`` and hello_imgui loads it into the default font
@@ -29,6 +39,27 @@ def imgui_bundle_assets_dir() -> Optional[str]:
 _ICON_FONT = "fonts/Font_Awesome_6_Free-Solid-900.otf"
 
 
+def data_dir() -> Path:
+    """The per-user dir for everything this library writes.
+
+    ``~/.imgui_data_loader`` by default; override with the
+    ``IMGUI_DATA_LOADER_HOME`` env var. Created on first use.
+    """
+    base = os.environ.get("IMGUI_DATA_LOADER_HOME")
+    d = Path(base) if base else (Path.home() / ".imgui_data_loader")
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def user_assets_dir() -> Path:
+    """``~/.imgui_data_loader/assets`` — optional user assets folder.
+
+    Not created automatically; make it yourself to supply the icon font (or
+    other assets) without touching the host app's assets folder.
+    """
+    return data_dir() / "assets"
+
+
 def ensure_assets(assets_folder: Optional[str] = None) -> None:
     """Make sure hello_imgui can resolve the FontAwesome icon font.
 
@@ -36,8 +67,9 @@ def ensure_assets(assets_folder: Optional[str] = None) -> None:
     ``fonts/Font_Awesome_6_Free-Solid-900.otf`` for the icons to show); it is
     then set as *the* assets folder. With no argument this never clobbers a
     host app's configured assets folder: if the icon font already resolves,
-    nothing is touched, and otherwise imgui-bundle's bundled assets are added
-    as an extra search path.
+    nothing is touched. Otherwise ``~/.imgui_data_loader/assets`` (if it
+    exists) and imgui-bundle's bundled assets are added as extra search
+    paths, in that order.
     """
     from imgui_bundle import hello_imgui
 
@@ -49,19 +81,19 @@ def ensure_assets(assets_folder: Optional[str] = None) -> None:
             return
     except Exception:
         pass
+    user = user_assets_dir()
+    if user.is_dir():
+        hello_imgui.add_assets_search_path(str(user))
+        try:
+            if hello_imgui.asset_exists(_ICON_FONT):
+                return
+        except Exception:
+            pass
     folder = imgui_bundle_assets_dir()
     if folder:
         hello_imgui.add_assets_search_path(folder)
 
 
-def config_dir() -> Path:
-    """Per-user config dir (``$XDG_CONFIG_HOME/imgui_data_loader``)."""
-    base = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
-    d = Path(base) / "imgui_data_loader"
-    d.mkdir(parents=True, exist_ok=True)
-    return d
-
-
 def default_ini_path(name: str = "file_dialog") -> str:
     """Path for hello_imgui's ``.ini`` (window layout) file."""
-    return str(config_dir() / f"{name}.ini")
+    return str(data_dir() / f"{name}.ini")

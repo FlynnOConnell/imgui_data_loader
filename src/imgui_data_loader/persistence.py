@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
-from ._assets import config_dir
+from ._assets import data_dir
 
 if TYPE_CHECKING:  # pragma: no cover
     from .config import PickKind
@@ -51,11 +51,13 @@ class PreferenceStore(Protocol):
 class JsonPreferenceStore:
     """A JSON-file-backed :class:`PreferenceStore`.
 
-    Stores a capped most-recent-first list plus the last-used directory.
+    Stores a capped most-recent-first list plus the last-used directories
+    (global and per pick kind). Default location:
+    ``~/.imgui_data_loader/recent.json``.
     """
 
     def __init__(self, path: Optional[str] = None, max_recent: int = 20):
-        self.path = Path(path) if path else (config_dir() / "recent.json")
+        self.path = Path(path) if path else (data_dir() / "recent.json")
         self.max_recent = max_recent
         self._data = {"recent": [], "last_dir": "", "last_dirs": {}}
         self._load()
