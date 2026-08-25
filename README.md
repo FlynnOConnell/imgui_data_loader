@@ -100,7 +100,7 @@ See all examples in [`examples/`](examples/).
 | `quit_on_escape` | `True` | Esc cancels |
 | `close_on_select` | `True` | exit the run loop after a pick or cancel (one-shot mode) |
 | `window_title`, `window_size`, `resizable` | — | OS window (one-shot) |
-| `ini_path` | `~/.config/imgui_data_loader/…` | where the layout `.ini` is saved |
+| `ini_path` | `~/.imgui_data_loader/file_dialog.ini` | where the layout `.ini` is saved |
 | `assets_folder` | `None` | folder providing the icon font; unset never overrides a host app's assets folder |
 | `persistence` | `None` | a `PreferenceStore` |
 | `on_select`, `on_cancel` | `None` | result callbacks |
@@ -115,6 +115,30 @@ toggles, rotary knobs, spinners, markdown, command palettes, cool bars, and the
 rest. Pair them with the library's themed helpers (`center_text`, `icon_button`,
 `push_button_style`, …) and `dlg.theme` so your additions match the dialog's
 styling.
+
+## Files on disk
+
+Everything the library writes lives under one dot directory,
+`~/.imgui_data_loader/` (override the location with the
+`IMGUI_DATA_LOADER_HOME` env var):
+
+| path | written by | purpose |
+|------|-----------|---------|
+| `~/.imgui_data_loader/file_dialog.ini` | `run_file_dialog` | hello_imgui window layout (position/size). Override per dialog with `config.ini_path`; an embedding app's own `ini_filename` always wins. |
+| `~/.imgui_data_loader/recent.json` | `JsonPreferenceStore` | recent files + last-used directories (global and per pick kind). Only written if you opt into `persistence=JsonPreferenceStore()`; pass `path=` to relocate. |
+| `~/.imgui_data_loader/assets/` | you (optional) | user assets folder. Never created automatically; if it exists it is added to hello_imgui's asset search path when the icon font can't be resolved. |
+
+Assets resolution: the dialog needs FontAwesome 6
+(`fonts/Font_Awesome_6_Free-Solid-900.otf`) for its icons. `ensure_assets()`
+never replaces an assets folder your app already configured — if the font
+resolves, nothing is touched; otherwise `~/.imgui_data_loader/assets` and then
+imgui-bundle's bundled assets are added as search paths. Passing
+`config.assets_folder` explicitly *does* set the assets folder to that path.
+
+Embedding apps with their own app dir (e.g. one that keeps everything under
+`~/.myapp`) should point both knobs there: `config.ini_path` for the layout
+file and a custom `PreferenceStore` (or `JsonPreferenceStore(path=...)`) for
+recents — nothing then touches `~/.imgui_data_loader`.
 
 ## Notes
 
