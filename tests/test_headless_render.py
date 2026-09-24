@@ -224,3 +224,157 @@ def test_apply_host_theme_wires_background():
     # the callback was replaced with a wrapper (which chains prev at run time)
     assert params.callbacks.setup_imgui_style is not prev
     assert callable(params.callbacks.setup_imgui_style)
+
+
+def _run_frames(dlg, frames, on_frame):
+    from imgui_bundle import hello_imgui
+
+    state = {"n": 0}
+
+    def pre_new_frame():
+        state["n"] += 1
+        on_frame(state["n"])
+        if state["n"] >= frames:
+            hello_imgui.get_runner_params().app_shall_exit = True
+
+    params = _null_runner_params()
+    params.callbacks.pre_new_frame = pre_new_frame
+    params.callbacks.show_gui = dlg.render
+    try:
+        hello_imgui.run(params)
+    except Exception as exc:
+        pytest.skip(f"null backend unavailable: {exc}")
+
+
+def _press_escape_on(frame):
+    from imgui_bundle import imgui
+
+    def on_frame(n):
+        if n == frame:
+            imgui.get_io().add_key_event(imgui.Key.escape, True)
+        elif n == frame + 1:
+            imgui.get_io().add_key_event(imgui.Key.escape, False)
+
+    return on_frame
+
+
+def test_escape_cancels_the_dialog():
+    ensure_assets()
+    dlg = FileDialog(FileDialogConfig(close_on_select=False))
+    _run_frames(dlg, frames=6, on_frame=_press_escape_on(3))
+    assert dlg.result is not None and dlg.result.cancelled
+
+
+def test_escape_closes_an_open_popup_without_cancelling():
+    ensure_assets()
+    dlg = FileDialog(FileDialogConfig(close_on_select=False, options_draw=lambda: None))
+    dlg.open_options()
+    _run_frames(dlg, frames=8, on_frame=_press_escape_on(4))
+    assert dlg.result is None
+
+
+def test_escape_leaves_a_focused_text_field_without_cancelling():
+    from imgui_bundle import imgui
+
+    ensure_assets()
+    state = {"frame": 0, "text": ""}
+
+    def field():
+        state["frame"] += 1
+        if state["frame"] == 2:
+            imgui.set_keyboard_focus_here()
+        _, state["text"] = imgui.input_text("##field", state["text"])
+
+    dlg = FileDialog(FileDialogConfig(close_on_select=False, top_draw=field))
+    _run_frames(dlg, frames=8, on_frame=_press_escape_on(4))
+    assert dlg.result is None
+
+
+def test_a_second_pick_waits_for_the_open_picker(monkeypatch):
+    import types
+
+    from imgui_data_loader import dialog as dialog_module
+
+    class Pending:
+        def ready(self):
+            return False
+
+    opened = []
+
+    def select_folder(title, start):
+        opened.append(title)
+        return Pending()
+
+    monkeypatch.setattr(dialog_module, "pfd", types.SimpleNamespace(select_folder=select_folder))
+    dlg = FileDialog(FileDialogConfig())
+    dlg.pick(ButtonSpec("first", PickKind.SELECT_FOLDER))
+    dlg.pick(ButtonSpec("second", PickKind.SELECT_FOLDER))
+    assert opened == ["first"]
+
+
+def _footer_bottom_and_viewport_height(top_height):
+    from imgui_bundle import hello_imgui, imgui
+
+    ensure_assets()
+    seen = {}
+
+    def top():
+        imgui.dummy(imgui.ImVec2(10, top_height))
+
+    def footer():
+        imgui.button("footer")
+        seen["bottom"] = imgui.get_item_rect_max().y
+        seen["height"] = imgui.get_main_viewport().size.y
+        seen["em"] = hello_imgui.em_size(1)
+
+    dlg = FileDialog(FileDialogConfig(close_on_select=False, top_draw=top, footer_draw=footer))
+    _run_frames(dlg, frames=5, on_frame=lambda n: None)
+    return seen
+
+
+def test_footer_sits_at_the_bottom_under_short_content():
+    seen = _footer_bottom_and_viewport_height(top_height=10)
+    assert seen["height"] - 2 * seen["em"] < seen["bottom"] <= seen["height"]
+
+
+def test_footer_stays_in_the_window_under_tall_content():
+    seen = _footer_bottom_and_viewport_height(top_height=5000)
+    assert seen["height"] - 2 * seen["em"] < seen["bottom"] <= seen["height"]
+
+
+def test_body_slot_spans_the_dialog_under_the_card():
+    from imgui_bundle import imgui
+
+    ensure_assets()
+    widths = {}
+
+    def info():
+        widths["card"] = imgui.get_content_region_avail().x
+
+    def body():
+        widths["body"] = imgui.get_content_region_avail().x
+        widths["body_y"] = imgui.get_cursor_screen_pos().y
+
+    def footer():
+        widths["footer_y"] = imgui.get_cursor_screen_pos().y
+
+    dlg = FileDialog(FileDialogConfig(close_on_select=False, info=info, body_draw=body, footer_draw=footer))
+    _run_frames(dlg, frames=4, on_frame=lambda n: None)
+    assert widths["body"] > widths["card"]
+    assert widths["body_y"] < widths["footer_y"]
+
+
+def test_info_card_pads_top_and_bottom_evenly():
+    from imgui_bundle import imgui
+
+    ensure_assets()
+    gaps = {}
+
+    def info():
+        gaps["top"] = imgui.get_cursor_screen_pos().y - imgui.get_window_pos().y
+        imgui.text("card")
+        gaps["bottom"] = imgui.get_window_pos().y + imgui.get_window_size().y - imgui.get_item_rect_max().y
+
+    dlg = FileDialog(FileDialogConfig(close_on_select=False, info=info))
+    _run_frames(dlg, frames=4, on_frame=lambda n: None)
+    assert gaps["top"] == pytest.approx(gaps["bottom"], abs=1.0)

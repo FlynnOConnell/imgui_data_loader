@@ -34,7 +34,7 @@ Module responsibilities:
 - `_assets.py` — the single source for per-user paths and font resolution. Everything the library writes lives under `data_dir()` = `~/.imgui_data_loader` (env override `IMGUI_DATA_LOADER_HOME`): the layout `.ini` (`default_ini_path()`), `recent.json` (JsonPreferenceStore default), and an optional user `assets/` subdir. `ensure_assets()` is deliberately non-clobbering: it no-ops when the icon font already resolves and otherwise *adds* `~/.imgui_data_loader/assets` (if present) then imgui-bundle's bundled assets as search paths, so a host app's own `set_assets_folder` choice survives. Only an explicit `assets_folder` replaces the folder. The library ships no fonts of its own.
 - `runner.py` — the one-shot harness only. Note the `.ini` handling: hello_imgui otherwise drops the window-layout `.ini` in the cwd, so `run_file_dialog` pins it to an absolute path (`config.ini_path` or `default_ini_path()`) and creates the parent dir. It only fills `ini_filename` when unset, so an embedding app's choice wins.
 
-Content is injected through **draw-callback slots** on the config (`header_draw`, `top_draw`, `info`, `options_draw`, `footer_draw`). These run *inside an active imgui frame* — they may only call imgui.
+Content is injected through **draw-callback slots** on the config (`header_draw`, `top_draw`, `info`, `body_draw`, `options_draw`, `footer_draw`). These run *inside an active imgui frame* — they may only call imgui.
 
 The bundled FontAwesome build is **Solid** only; a few glyph constants (e.g. `ICON_FA_IMAGES`, `ICON_FA_LAYER_GROUP`, `ICON_FA_PHOTO_FILM`) are regular-style and render as a blank box. Prefer solid icons (`ICON_FA_FILE_IMAGE`, `ICON_FA_CLONE`, `ICON_FA_COPY`, `ICON_FA_FOLDER_OPEN`, `ICON_FA_FLOPPY_DISK`, …).
 

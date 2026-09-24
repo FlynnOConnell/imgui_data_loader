@@ -72,6 +72,8 @@ class FileDialog:
         self._pending_kind: Optional[PickKind] = None
         self._result: Optional[DialogResult] = None
         self._open_options = False
+        self._escape_owned = False
+        self._footer_height = 0.0
 
     # ------------------------------------------------------------------
     # public surface
@@ -153,7 +155,14 @@ class FileDialog:
         fts = btn.filetypes if btn.filetypes is not None else self.config.filetypes
         return flatten_filters(fts or [FileType("All Files", "*")])
 
+    @property
+    def picking(self) -> bool:
+        """Whether a native picker is open and its choice not yet in."""
+        return self._pending is not None
+
     def _launch(self, btn: ButtonSpec) -> None:
+        if self.picking:
+            return
         start = self._start_dir(btn.kind)
         title = btn.title or btn.label
         if btn.kind == PickKind.OPEN_FILE:
@@ -218,6 +227,10 @@ class FileDialog:
     # ------------------------------------------------------------------
     def render(self) -> None:
         """Draw one frame of the dialog. Use as ``callbacks.show_gui``."""
+        # read before any widget runs: by the footer, the Esc has already closed the popup or left the field
+        self._escape_owned = imgui.is_any_item_active() or imgui.is_popup_open(
+            "", imgui.PopupFlags_.any_popup_id
+        )
         theme = self.theme
         imgui.push_style_color(imgui.Col_.window_bg, to_vec4(theme.bg))
         imgui.push_style_color(imgui.Col_.child_bg, imgui.ImVec4(0, 0, 0, 0))
@@ -227,6 +240,10 @@ class FileDialog:
         imgui.push_style_color(imgui.Col_.frame_bg, to_vec4(theme.frame_bg))
         imgui.push_style_color(imgui.Col_.frame_bg_hovered, to_vec4(theme.frame_bg_hovered))
         imgui.push_style_color(imgui.Col_.check_mark, to_vec4(theme.accent))
+        imgui.push_style_color(imgui.Col_.popup_bg, to_vec4(theme.bg_popup))
+        imgui.push_style_color(imgui.Col_.header, to_vec4(theme.button_face))
+        imgui.push_style_color(imgui.Col_.header_hovered, to_vec4(theme.button_face_hover))
+        imgui.push_style_color(imgui.Col_.header_active, to_vec4(theme.button_face_active))
         imgui.push_style_var(imgui.StyleVar_.window_padding, hello_imgui.em_to_vec2(1.0, 0.8))
         imgui.push_style_var(imgui.StyleVar_.frame_padding, hello_imgui.em_to_vec2(0.6, 0.4))
         imgui.push_style_var(imgui.StyleVar_.item_spacing, hello_imgui.em_to_vec2(0.6, 0.4))
@@ -239,26 +256,32 @@ class FileDialog:
         ):
             imgui.push_id("imgui_data_loader")
 
-            self._draw_header()
+            # the footer's height is last frame's, so the content leaves exactly that much room under it
+            with imgui_ctx.begin_child("##idl_content", size=imgui.ImVec2(0, -self._footer_height)):
+                self._draw_header()
 
-            imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
-            imgui.separator()
-            imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
+                imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
+                imgui.separator()
+                imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
 
-            if self.config.top_draw is not None:
-                call_draw(self.config.top_draw, self)
-                imgui.dummy(hello_imgui.em_to_vec2(0, 0.2))
+                if self.config.top_draw is not None:
+                    call_draw(self.config.top_draw, self)
+                    imgui.dummy(hello_imgui.em_to_vec2(0, 0.2))
 
-            self._draw_buttons()
-            self._draw_info_card()
-            self._draw_options_popup()
-            self._poll()
+                self._draw_buttons()
+                self._draw_info_card()
+                self._draw_body()
+                self._draw_options_popup()
+                self._poll()
+
+            top_footer = imgui.get_cursor_pos_y()
             self._draw_footer()
+            self._footer_height = imgui.get_cursor_pos_y() - top_footer
 
             imgui.pop_id()
 
         imgui.pop_style_var(4)
-        imgui.pop_style_color(8)
+        imgui.pop_style_color(12)
 
     def _button_width(self) -> float:
         avail_w = imgui.get_content_region_avail().x
@@ -276,6 +299,7 @@ class FileDialog:
     def _draw_buttons(self) -> None:
         btn_w = self._button_width()
         btn_h = hello_imgui.em_size(1.8)
+        imgui.begin_disabled(self.picking)
         for i, btn in enumerate(self.config.buttons):
             center_next_item(btn_w)
             imgui.push_id(i)
@@ -289,6 +313,7 @@ class FileDialog:
                 self._launch(btn)
             imgui.pop_id()
             imgui.dummy(hello_imgui.em_to_vec2(0, 0.2))
+        imgui.end_disabled()
 
     def _draw_info_card(self) -> None:
         callbacks = self.config.info_callbacks()
@@ -322,10 +347,16 @@ class FileDialog:
                 call_draw(cb, self)
                 imgui.pop_id()
             imgui.unindent(hello_imgui.em_size(0.6))
-            imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
+            imgui.dummy(hello_imgui.em_to_vec2(0, 0.2))
 
         imgui.pop_style_var(2)
         imgui.pop_style_color()
+
+    def _draw_body(self) -> None:
+        if self.config.body_draw is None:
+            return
+        imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
+        call_draw(self.config.body_draw, self)
 
     def _draw_options_popup(self) -> None:
         if self.config.options_draw is None:
@@ -340,7 +371,12 @@ class FileDialog:
             wp, ws = imgui.get_window_pos(), imgui.get_window_size()
             center = imgui.ImVec2(wp.x + ws.x * 0.5, wp.y + ws.y * 0.5)
             imgui.set_next_window_pos(center, imgui.Cond_.appearing, imgui.ImVec2(0.5, 0.5))
-        if not imgui.begin_popup("##idl_options", imgui.WindowFlags_.always_auto_resize):
+        imgui.push_style_color(imgui.Col_.border, to_vec4(self.theme.accent))
+        imgui.push_style_var(imgui.StyleVar_.window_border_size, 1.0)
+        opened = imgui.begin_popup("##idl_options", imgui.WindowFlags_.always_auto_resize)
+        imgui.pop_style_var()
+        imgui.pop_style_color()
+        if not opened:
             return
         try:
             imgui.text_colored(
@@ -407,5 +443,8 @@ class FileDialog:
         self._handle_escape()
 
     def _handle_escape(self) -> None:
-        if self.config.quit_on_escape and imgui.is_key_pressed(imgui.Key.escape):
+        """Cancel on Esc, unless a popup or text field was using it."""
+        if self._escape_owned or not self.config.quit_on_escape:
+            return
+        if imgui.is_key_pressed(imgui.Key.escape):
             self.cancel()

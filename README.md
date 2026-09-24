@@ -92,6 +92,7 @@ See all examples in [`examples/`](examples/).
 | `header_draw` | `None` | replace the title/subtitle block |
 | `top_draw` | `None` | content between header and buttons |
 | `info` | `None` | callback(s) drawn in the info card |
+| `body_draw` | `None` | full-width content under the info card, for forms and tables |
 | `options_draw` | `None` | Options popup content (also toggles the button) |
 | `footer_draw` | `None` | replace the Options/Quit row |
 | `options_label` | `"Options"` | popup + button label |
@@ -107,9 +108,11 @@ See all examples in [`examples/`](examples/).
 
 ### Draw slots
 
-`header_draw`, `top_draw`, `info`, `options_draw`, and `footer_draw` let you
-render your own content in specific regions — the header block, a row above the
-buttons, the info card, the options popup, and the footer. Each runs inside a
+`header_draw`, `top_draw`, `info`, `body_draw`, `options_draw`, and
+`footer_draw` let you render your own content in specific regions — the header
+block, a row above the buttons, the info card, a full-width area under the card,
+the options popup, and the footer. The footer stays at the bottom of the window;
+everything above it scrolls when it outgrows the window. Each runs inside a
 live imgui frame, so any widget **bundled with imgui-bundle** works: animated
 toggles, rotary knobs, spinners, markdown, command palettes, cool bars, and the
 rest. Pair them with the library's themed helpers (`center_text`, `icon_button`,

@@ -29,3 +29,8 @@ def test_to_vec4_passthrough_imvec4():
 
     src = imgui.ImVec4(0.4, 0.5, 0.6, 0.7)
     assert to_vec4(src) is src
+
+
+def test_popup_background_follows_the_theme():
+    assert Theme.dark().bg_popup != Theme.light().bg_popup
+    assert Theme.dark().bg_popup != Theme.dark().bg

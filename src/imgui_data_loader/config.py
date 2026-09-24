@@ -141,9 +141,12 @@ class FileDialogConfig:
     All fields have sensible defaults; the empty ``FileDialogConfig()`` gives
     an "Open File(s)" + "Select Folder" launcher.
 
-    Content slots (``header_draw``, ``top_draw``, ``info``, ``options_draw``,
-    ``footer_draw``) are callbacks that draw arbitrary imgui inside the dialog.
-    Each callback may accept the :class:`FileDialog` instance or no argument.
+    Content slots (``header_draw``, ``top_draw``, ``info``, ``body_draw``,
+    ``options_draw``, ``footer_draw``) are callbacks that draw arbitrary imgui
+    inside the dialog. Each callback may accept the :class:`FileDialog`
+    instance or no argument. ``info`` is drawn in a card as wide as the picker
+    buttons; ``body_draw`` is drawn under it across the full dialog width, for
+    forms and tables that need the room.
     """
 
     # --- header / branding ---
@@ -164,6 +167,7 @@ class FileDialogConfig:
     header_draw: Optional[DrawCallback] = None
     top_draw: Optional[DrawCallback] = None
     info: Union[DrawCallback, Sequence[DrawCallback], None] = None
+    body_draw: Optional[DrawCallback] = None
     options_draw: Optional[DrawCallback] = None
     footer_draw: Optional[DrawCallback] = None
 

@@ -35,6 +35,8 @@ class Theme:
     bg: Color = (0.11, 0.11, 0.12, 1.0)
     # info card fill; fully transparent = border-only card on the dialog bg
     bg_card: Color = (0.0, 0.0, 0.0, 0.0)
+    # options popup and combo dropdowns, a step off bg so they read as a layer above it
+    bg_popup: Color = (0.07, 0.07, 0.08, 1.0)
     accent: Color = (0.20, 0.50, 0.85, 1.0)
     accent_hover: Color = (0.25, 0.55, 0.90, 1.0)
     accent_active: Color = (0.15, 0.45, 0.80, 1.0)
@@ -66,6 +68,7 @@ class Theme:
     def light() -> "Theme":
         return Theme(
             bg=(0.94, 0.94, 0.95, 1.0),
+            bg_popup=(0.99, 0.99, 1.00, 1.0),
             accent=(0.10, 0.45, 0.80, 1.0),
             accent_hover=(0.15, 0.50, 0.85, 1.0),
             accent_active=(0.05, 0.40, 0.75, 1.0),
