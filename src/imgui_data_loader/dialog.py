@@ -266,6 +266,7 @@ class FileDialog:
 
                 self._draw_buttons()
                 self._draw_info_card()
+                self._draw_body()
                 self._draw_options_popup()
                 self._poll()
 
@@ -346,6 +347,12 @@ class FileDialog:
 
         imgui.pop_style_var(2)
         imgui.pop_style_color()
+
+    def _draw_body(self) -> None:
+        if self.config.body_draw is None:
+            return
+        imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
+        call_draw(self.config.body_draw, self)
 
     def _draw_options_popup(self) -> None:
         if self.config.options_draw is None:

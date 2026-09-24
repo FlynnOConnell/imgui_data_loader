@@ -340,3 +340,25 @@ def test_footer_sits_at_the_bottom_under_short_content():
 def test_footer_stays_in_the_window_under_tall_content():
     seen = _footer_bottom_and_viewport_height(top_height=5000)
     assert seen["height"] - 2 * seen["em"] < seen["bottom"] <= seen["height"]
+
+
+def test_body_slot_spans_the_dialog_under_the_card():
+    from imgui_bundle import imgui
+
+    ensure_assets()
+    widths = {}
+
+    def info():
+        widths["card"] = imgui.get_content_region_avail().x
+
+    def body():
+        widths["body"] = imgui.get_content_region_avail().x
+        widths["body_y"] = imgui.get_cursor_screen_pos().y
+
+    def footer():
+        widths["footer_y"] = imgui.get_cursor_screen_pos().y
+
+    dlg = FileDialog(FileDialogConfig(close_on_select=False, info=info, body_draw=body, footer_draw=footer))
+    _run_frames(dlg, frames=4, on_frame=lambda n: None)
+    assert widths["body"] > widths["card"]
+    assert widths["body_y"] < widths["footer_y"]
