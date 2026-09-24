@@ -288,3 +288,25 @@ def test_escape_leaves_a_focused_text_field_without_cancelling():
     dlg = FileDialog(FileDialogConfig(close_on_select=False, top_draw=field))
     _run_frames(dlg, frames=8, on_frame=_press_escape_on(4))
     assert dlg.result is None
+
+
+def test_a_second_pick_waits_for_the_open_picker(monkeypatch):
+    import types
+
+    from imgui_data_loader import dialog as dialog_module
+
+    class Pending:
+        def ready(self):
+            return False
+
+    opened = []
+
+    def select_folder(title, start):
+        opened.append(title)
+        return Pending()
+
+    monkeypatch.setattr(dialog_module, "pfd", types.SimpleNamespace(select_folder=select_folder))
+    dlg = FileDialog(FileDialogConfig())
+    dlg.pick(ButtonSpec("first", PickKind.SELECT_FOLDER))
+    dlg.pick(ButtonSpec("second", PickKind.SELECT_FOLDER))
+    assert opened == ["first"]

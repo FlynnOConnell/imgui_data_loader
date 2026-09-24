@@ -154,7 +154,14 @@ class FileDialog:
         fts = btn.filetypes if btn.filetypes is not None else self.config.filetypes
         return flatten_filters(fts or [FileType("All Files", "*")])
 
+    @property
+    def picking(self) -> bool:
+        """Whether a native picker is open and its choice not yet in."""
+        return self._pending is not None
+
     def _launch(self, btn: ButtonSpec) -> None:
+        if self.picking:
+            return
         start = self._start_dir(btn.kind)
         title = btn.title or btn.label
         if btn.kind == PickKind.OPEN_FILE:
@@ -281,6 +288,7 @@ class FileDialog:
     def _draw_buttons(self) -> None:
         btn_w = self._button_width()
         btn_h = hello_imgui.em_size(1.8)
+        imgui.begin_disabled(self.picking)
         for i, btn in enumerate(self.config.buttons):
             center_next_item(btn_w)
             imgui.push_id(i)
@@ -294,6 +302,7 @@ class FileDialog:
                 self._launch(btn)
             imgui.pop_id()
             imgui.dummy(hello_imgui.em_to_vec2(0, 0.2))
+        imgui.end_disabled()
 
     def _draw_info_card(self) -> None:
         callbacks = self.config.info_callbacks()
