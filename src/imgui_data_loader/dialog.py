@@ -240,6 +240,10 @@ class FileDialog:
         imgui.push_style_color(imgui.Col_.frame_bg, to_vec4(theme.frame_bg))
         imgui.push_style_color(imgui.Col_.frame_bg_hovered, to_vec4(theme.frame_bg_hovered))
         imgui.push_style_color(imgui.Col_.check_mark, to_vec4(theme.accent))
+        imgui.push_style_color(imgui.Col_.popup_bg, to_vec4(theme.bg_popup))
+        imgui.push_style_color(imgui.Col_.header, to_vec4(theme.button_face))
+        imgui.push_style_color(imgui.Col_.header_hovered, to_vec4(theme.button_face_hover))
+        imgui.push_style_color(imgui.Col_.header_active, to_vec4(theme.button_face_active))
         imgui.push_style_var(imgui.StyleVar_.window_padding, hello_imgui.em_to_vec2(1.0, 0.8))
         imgui.push_style_var(imgui.StyleVar_.frame_padding, hello_imgui.em_to_vec2(0.6, 0.4))
         imgui.push_style_var(imgui.StyleVar_.item_spacing, hello_imgui.em_to_vec2(0.6, 0.4))
@@ -277,7 +281,7 @@ class FileDialog:
             imgui.pop_id()
 
         imgui.pop_style_var(4)
-        imgui.pop_style_color(8)
+        imgui.pop_style_color(12)
 
     def _button_width(self) -> float:
         avail_w = imgui.get_content_region_avail().x
@@ -367,7 +371,12 @@ class FileDialog:
             wp, ws = imgui.get_window_pos(), imgui.get_window_size()
             center = imgui.ImVec2(wp.x + ws.x * 0.5, wp.y + ws.y * 0.5)
             imgui.set_next_window_pos(center, imgui.Cond_.appearing, imgui.ImVec2(0.5, 0.5))
-        if not imgui.begin_popup("##idl_options", imgui.WindowFlags_.always_auto_resize):
+        imgui.push_style_color(imgui.Col_.border, to_vec4(self.theme.accent))
+        imgui.push_style_var(imgui.StyleVar_.window_border_size, 1.0)
+        opened = imgui.begin_popup("##idl_options", imgui.WindowFlags_.always_auto_resize)
+        imgui.pop_style_var()
+        imgui.pop_style_color()
+        if not opened:
             return
         try:
             imgui.text_colored(
