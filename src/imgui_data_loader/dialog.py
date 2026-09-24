@@ -72,6 +72,7 @@ class FileDialog:
         self._pending_kind: Optional[PickKind] = None
         self._result: Optional[DialogResult] = None
         self._open_options = False
+        self._escape_owned = False
 
     # ------------------------------------------------------------------
     # public surface
@@ -218,6 +219,10 @@ class FileDialog:
     # ------------------------------------------------------------------
     def render(self) -> None:
         """Draw one frame of the dialog. Use as ``callbacks.show_gui``."""
+        # read before any widget runs: by the footer, the Esc has already closed the popup or left the field
+        self._escape_owned = imgui.is_any_item_active() or imgui.is_popup_open(
+            "", imgui.PopupFlags_.any_popup_id
+        )
         theme = self.theme
         imgui.push_style_color(imgui.Col_.window_bg, to_vec4(theme.bg))
         imgui.push_style_color(imgui.Col_.child_bg, imgui.ImVec4(0, 0, 0, 0))
@@ -407,5 +412,8 @@ class FileDialog:
         self._handle_escape()
 
     def _handle_escape(self) -> None:
-        if self.config.quit_on_escape and imgui.is_key_pressed(imgui.Key.escape):
+        """Cancel on Esc, unless a popup or text field was using it."""
+        if self._escape_owned or not self.config.quit_on_escape:
+            return
+        if imgui.is_key_pressed(imgui.Key.escape):
             self.cancel()

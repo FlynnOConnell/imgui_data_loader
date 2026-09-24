@@ -224,3 +224,67 @@ def test_apply_host_theme_wires_background():
     # the callback was replaced with a wrapper (which chains prev at run time)
     assert params.callbacks.setup_imgui_style is not prev
     assert callable(params.callbacks.setup_imgui_style)
+
+
+def _run_frames(dlg, frames, on_frame):
+    from imgui_bundle import hello_imgui
+
+    state = {"n": 0}
+
+    def pre_new_frame():
+        state["n"] += 1
+        on_frame(state["n"])
+        if state["n"] >= frames:
+            hello_imgui.get_runner_params().app_shall_exit = True
+
+    params = _null_runner_params()
+    params.callbacks.pre_new_frame = pre_new_frame
+    params.callbacks.show_gui = dlg.render
+    try:
+        hello_imgui.run(params)
+    except Exception as exc:
+        pytest.skip(f"null backend unavailable: {exc}")
+
+
+def _press_escape_on(frame):
+    from imgui_bundle import imgui
+
+    def on_frame(n):
+        if n == frame:
+            imgui.get_io().add_key_event(imgui.Key.escape, True)
+        elif n == frame + 1:
+            imgui.get_io().add_key_event(imgui.Key.escape, False)
+
+    return on_frame
+
+
+def test_escape_cancels_the_dialog():
+    ensure_assets()
+    dlg = FileDialog(FileDialogConfig(close_on_select=False))
+    _run_frames(dlg, frames=6, on_frame=_press_escape_on(3))
+    assert dlg.result is not None and dlg.result.cancelled
+
+
+def test_escape_closes_an_open_popup_without_cancelling():
+    ensure_assets()
+    dlg = FileDialog(FileDialogConfig(close_on_select=False, options_draw=lambda: None))
+    dlg.open_options()
+    _run_frames(dlg, frames=8, on_frame=_press_escape_on(4))
+    assert dlg.result is None
+
+
+def test_escape_leaves_a_focused_text_field_without_cancelling():
+    from imgui_bundle import imgui
+
+    ensure_assets()
+    state = {"frame": 0, "text": ""}
+
+    def field():
+        state["frame"] += 1
+        if state["frame"] == 2:
+            imgui.set_keyboard_focus_here()
+        _, state["text"] = imgui.input_text("##field", state["text"])
+
+    dlg = FileDialog(FileDialogConfig(close_on_select=False, top_draw=field))
+    _run_frames(dlg, frames=8, on_frame=_press_escape_on(4))
+    assert dlg.result is None
