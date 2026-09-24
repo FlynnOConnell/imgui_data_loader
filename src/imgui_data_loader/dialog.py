@@ -347,7 +347,7 @@ class FileDialog:
                 call_draw(cb, self)
                 imgui.pop_id()
             imgui.unindent(hello_imgui.em_size(0.6))
-            imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
+            imgui.dummy(hello_imgui.em_to_vec2(0, 0.2))
 
         imgui.pop_style_var(2)
         imgui.pop_style_color()

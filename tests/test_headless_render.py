@@ -362,3 +362,19 @@ def test_body_slot_spans_the_dialog_under_the_card():
     _run_frames(dlg, frames=4, on_frame=lambda n: None)
     assert widths["body"] > widths["card"]
     assert widths["body_y"] < widths["footer_y"]
+
+
+def test_info_card_pads_top_and_bottom_evenly():
+    from imgui_bundle import imgui
+
+    ensure_assets()
+    gaps = {}
+
+    def info():
+        gaps["top"] = imgui.get_cursor_screen_pos().y - imgui.get_window_pos().y
+        imgui.text("card")
+        gaps["bottom"] = imgui.get_window_pos().y + imgui.get_window_size().y - imgui.get_item_rect_max().y
+
+    dlg = FileDialog(FileDialogConfig(close_on_select=False, info=info))
+    _run_frames(dlg, frames=4, on_frame=lambda n: None)
+    assert gaps["top"] == pytest.approx(gaps["bottom"], abs=1.0)
