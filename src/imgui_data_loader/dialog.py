@@ -73,6 +73,7 @@ class FileDialog:
         self._result: Optional[DialogResult] = None
         self._open_options = False
         self._escape_owned = False
+        self._footer_height = 0.0
 
     # ------------------------------------------------------------------
     # public surface
@@ -251,21 +252,26 @@ class FileDialog:
         ):
             imgui.push_id("imgui_data_loader")
 
-            self._draw_header()
+            # the footer's height is last frame's, so the content leaves exactly that much room under it
+            with imgui_ctx.begin_child("##idl_content", size=imgui.ImVec2(0, -self._footer_height)):
+                self._draw_header()
 
-            imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
-            imgui.separator()
-            imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
+                imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
+                imgui.separator()
+                imgui.dummy(hello_imgui.em_to_vec2(0, 0.3))
 
-            if self.config.top_draw is not None:
-                call_draw(self.config.top_draw, self)
-                imgui.dummy(hello_imgui.em_to_vec2(0, 0.2))
+                if self.config.top_draw is not None:
+                    call_draw(self.config.top_draw, self)
+                    imgui.dummy(hello_imgui.em_to_vec2(0, 0.2))
 
-            self._draw_buttons()
-            self._draw_info_card()
-            self._draw_options_popup()
-            self._poll()
+                self._draw_buttons()
+                self._draw_info_card()
+                self._draw_options_popup()
+                self._poll()
+
+            top_footer = imgui.get_cursor_pos_y()
             self._draw_footer()
+            self._footer_height = imgui.get_cursor_pos_y() - top_footer
 
             imgui.pop_id()
 

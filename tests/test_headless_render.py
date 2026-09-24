@@ -310,3 +310,33 @@ def test_a_second_pick_waits_for_the_open_picker(monkeypatch):
     dlg.pick(ButtonSpec("first", PickKind.SELECT_FOLDER))
     dlg.pick(ButtonSpec("second", PickKind.SELECT_FOLDER))
     assert opened == ["first"]
+
+
+def _footer_bottom_and_viewport_height(top_height):
+    from imgui_bundle import hello_imgui, imgui
+
+    ensure_assets()
+    seen = {}
+
+    def top():
+        imgui.dummy(imgui.ImVec2(10, top_height))
+
+    def footer():
+        imgui.button("footer")
+        seen["bottom"] = imgui.get_item_rect_max().y
+        seen["height"] = imgui.get_main_viewport().size.y
+        seen["em"] = hello_imgui.em_size(1)
+
+    dlg = FileDialog(FileDialogConfig(close_on_select=False, top_draw=top, footer_draw=footer))
+    _run_frames(dlg, frames=5, on_frame=lambda n: None)
+    return seen
+
+
+def test_footer_sits_at_the_bottom_under_short_content():
+    seen = _footer_bottom_and_viewport_height(top_height=10)
+    assert seen["height"] - 2 * seen["em"] < seen["bottom"] <= seen["height"]
+
+
+def test_footer_stays_in_the_window_under_tall_content():
+    seen = _footer_bottom_and_viewport_height(top_height=5000)
+    assert seen["height"] - 2 * seen["em"] < seen["bottom"] <= seen["height"]
